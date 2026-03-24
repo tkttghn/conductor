@@ -86,19 +86,19 @@
 
         MOUSE {
             bindings = <
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans    &trans    &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &mkp MB1  &mkp MB2  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans    &trans    &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans                    &trans    &trans
+&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans                  &trans  &trans
             >;
         };
 
         SCROLL {
             bindings = <
-&trans  &trans  &none   &trans  &trans                  &none   &none   &trans  &trans  &none
-&none   &trans  &trans  &trans  &trans                  &none   &none   &none   &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans                  &trans  &trans
+&kp C_BRI_DEC   &kp C_BRI_INC  &none       &kp LG(MINUS)          &kp LS(LG(EQUAL))                     &mkp MB5           &none              &none  &none              &none
+&kp C_VOL_DN    &kp C_VOL_UP   &kp C_MUTE  &kp LA(LC(LG(RIGHT)))  &none                                 &mkp MB4           &none              &none  &kp LA(LC(LG(L)))  &trans
+&kp LEFT_SHIFT  &none          &none       &none                  &kp LA(LC(LG(LEFT)))                  &kp LA(LC(LG(N)))  &kp LA(LC(LG(M)))  &none  &none              &kp RIGHT_SHIFT
+&trans          &trans         &trans      &trans                 &mo 12                &trans  &trans  &trans                                       &trans             &trans
             >;
         };
 
@@ -113,46 +113,55 @@
 
         layer_7 {
             bindings = <
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans                  &trans  &trans
+&trans  &trans     &kp LC(E)    &trans     &trans                    &trans    &trans     &trans     &trans     &kp UP
+&trans  &kp LC(A)  &kp LC(DEL)  &kp RIGHT  &trans                    &kp BSPC  &kp LC(J)  &kp LC(K)  &kp LC(L)  &kp LC(SEMI)
+&trans  &trans     &trans       &trans     &kp LEFT                  &kp DOWN  &kp RET    &trans     &trans     &trans
+&trans  &trans     &trans       &trans     &trans    &trans  &trans  &trans                          &trans     &trans
             >;
         };
 
         layer_8 {
             bindings = <
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans                  &trans  &trans
+&kp N1          &kp N2      &kp N3      &kp N4      &kp N5                        &kp N6     &kp N7    &kp N8    &kp N9    &kp N0
+&kp BACKSLASH   &kp LS(N2)  &kp LS(N8)  &kp LS(N1)  &kp LS(FSLH)                  &kp EQUAL  &mkp MB1  &mkp MB3  &mkp MB2  &trans
+&kp LEFT_SHIFT  &trans      &kp LS(N9)  &kp LS(N0)  &kp LS(N3)                    &kp GRAVE  &kp SQT   &kp LBKT  &kp RBKT  &mt RIGHT_SHIFT FSLH
+&trans          &trans      &trans      &trans      &trans        &trans  &trans  &trans                         &trans    &trans
             >;
         };
 
         layer_9 {
             bindings = <
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans                  &trans  &trans
+&kp F1          &kp F2        &kp F3             &kp F4         &kp F5                          &kp F6    &kp F7    &kp F8    &kp F9     &kp F10
+&kp F11         &kp F12       &kp LC(F)          &none          &none                           &kp BSPC  &mkp MB1  &kp UP    &mkp MB2   &none
+&kp LEFT_SHIFT  &kp LC(LEFT)  &kp LA(LC(LG(N)))  &kp LC(RIGHT)  &kp LS(LG(N4))                  &kp DEL   &kp LEFT  &kp DOWN  &kp RIGHT  &kp RIGHT_SHIFT
+&trans          &trans        &trans             &trans         &trans          &trans  &trans  &trans                        &trans     &trans
             >;
         };
 
         layer_10 {
             bindings = <
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans                  &trans  &trans
+&trans  &trans    &kp END  &trans     &trans                    &trans    &trans   &trans  &trans  &kp UP
+&trans  &kp HOME  &kp DEL  &kp RIGHT  &trans                    &kp BSPC  &kp F6   &kp F7  &kp F9  &kp F10
+&trans  &trans    &trans   &trans     &kp LEFT                  &kp DOWN  &kp RET  &trans  &trans  &trans
+&trans  &trans    &trans   &trans     &trans    &trans  &trans  &trans                     &trans  &trans
             >;
         };
 
         layer_11 {
             bindings = <
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans                  &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &trans                  &trans  &trans
+&kp F1          &kp F2        &kp F3        &kp F4         &kp F5                         &kp F6    &kp F7    &kp F8    &kp F9     &kp F10
+&kp F11         &kp F12       &kp LG(UP)    &none          &none                          &kp BSPC  &mkp MB1  &kp UP    &mkp MB2   &none
+&kp LEFT_SHIFT  &kp LG(LEFT)  &kp LG(DOWN)  &kp LG(RIGHT)  &kp LS(LG(S))                  &kp DEL   &kp LEFT  &kp DOWN  &kp RIGHT  &kp RIGHT_SHIFT
+&trans          &trans        &trans        &trans         &trans         &trans  &trans  &trans                        &trans     &trans
+            >;
+        };
+
+        layer_12 {
+            bindings = <
+&trans  &trans  &trans  &trans  &trans                  &bt BT_SEL 0   &bt BT_SEL 1   &bt BT_SEL 2   &bt BT_SEL 3   &trans
+&trans  &trans  &trans  &trans  &trans                  &bt BT_DISC 0  &bt BT_DISC 1  &bt BT_DISC 2  &bt BT_DISC 3  &trans
+&trans  &trans  &trans  &trans  &trans                  &to 0          &to 0          &trans         &to 1          &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &bootloader                                  &bt BT_CLR     &bt BT_CLR_ALL
             >;
         };
     };

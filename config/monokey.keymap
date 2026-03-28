@@ -43,6 +43,44 @@
         };
     };
 
+    macros {
+        mc_bt_SEL_mac: mc_bt_SEL_mac {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings
+                = <&bt BT_DISC 1>    // プロファイル1の接続を解除
+                , <&bt BT_DISC 2>    // プロファイル2の接続を解除
+                , <&bt BT_DISC 3>    // プロファイル3の接続を解除
+                , <&bt BT_SEL 0>     // プロファイル0を選択して接続試行
+                , <&to 0>            // レイヤー0へ移行
+                ;
+        };
+
+        mc_bt_SEL_ipad: mc_bt_SEL_ipad {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings
+                = <&bt BT_DISC 0>    // プロファイル0の接続を解除
+                , <&bt BT_DISC 2>    // プロファイル2の接続を解除
+                , <&bt BT_DISC 3>    // プロファイル3の接続を解除
+                , <&bt BT_SEL 1>     // プロファイル1を選択して接続試行
+                , <&to 0>            // レイヤー0へ移行
+                ;
+        };
+
+        mc_bt_SEL_win: mc_bt_SEL_win {
+            compatible = "zmk,behavior-macro";
+            #binding-cells = <0>;
+            bindings
+                = <&bt BT_DISC 0>    // プロファイル0の接続を解除
+                , <&bt BT_DISC 1>    // プロファイル1の接続を解除
+                , <&bt BT_DISC 2>    // プロファイル2の接続を解除
+                , <&bt BT_SEL 3>     // プロファイル3を選択して接続試行
+                , <&to 1>            // レイヤー1へ移行
+                ;
+        };
+    };
+
     behaviors {
         right_click: right_click_behavior {
             compatible = "zmk,behavior-mouse-key";
@@ -128,7 +166,7 @@
         layer_7 {
             bindings = <
 &trans  &trans     &kp LC(E)    &trans     &trans                    &trans    &trans     &trans     &trans     &kp UP
-&trans  &kp LC(A)  &kp LC(DEL)  &kp RIGHT  &trans                    &kp BSPC  &kp LC(J)  &kp LC(K)  &kp LC(L)  &kp LC(SEMI)
+&trans  &kp LC(A)  &kp DEL      &kp RIGHT  &trans                    &kp BSPC  &kp LC(J)  &kp LC(K)  &kp LC(L)  &kp LC(SEMI)
 &trans  &trans     &trans       &trans     &kp LEFT                  &kp DOWN  &kp RET    &trans     &trans     &trans
 &trans  &trans     &trans       &trans     &trans    &trans  &trans  &trans                          &trans     &trans
             >;
@@ -172,10 +210,10 @@
 
         layer_12 {
             bindings = <
-&trans  &trans  &trans  &trans  &trans                  &bt BT_SEL 0   &bt BT_SEL 1   &bt BT_SEL 2   &bt BT_SEL 3   &trans
-&trans  &trans  &trans  &trans  &trans                  &bt BT_DISC 0  &bt BT_DISC 1  &bt BT_DISC 2  &bt BT_DISC 3  &trans
-&trans  &trans  &trans  &trans  &trans                  &to 0          &to 0          &trans         &to 1          &trans
-&trans  &trans  &trans  &trans  &trans  &trans  &trans  &bootloader                                  &bt BT_CLR     &bt BT_CLR_ALL
+&to 0   &to 1   &trans  &trans  &trans                  &mc_bt_SEL_mac   &mc_bt_SEL_ipad  &bt BT_SEL 2   &mc_bt_SEL_win  &trans
+&trans  &trans  &trans  &trans  &trans                  &bt BT_SEL 0     &bt BT_SEL 1     &bt BT_SEL 2   &bt BT_SEL 3    &trans
+&trans  &trans  &trans  &trans  &trans                  &bt BT_DISC 0    &bt BT_DISC 1    &bt BT_DISC 2  &bt BT_DISC 3   &trans
+&trans  &trans  &trans  &trans  &trans  &trans  &trans  &bootloader                                      &bt BT_CLR      &bt BT_CLR_ALL
             >;
         };
     };

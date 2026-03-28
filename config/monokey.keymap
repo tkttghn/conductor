@@ -18,14 +18,28 @@
     combos {
         compatible = "zmk,combos";
 
-        scroll {
-            bindings = <&mo 5>;
+        combo_mb1 {
+            timeout-ms = <50>;
+            bindings = <&mkp MB1>;
             key-positions = <17 18>;
         };
 
-        mb3 {
+        combo_mb2 {
+            timeout-ms = <50>;
+            bindings = <&mkp MB2>;
+            key-positions = <19 20>;
+        };
+
+        combo_mb3 {
+            timeout-ms = <50>;
             bindings = <&mkp MB3>;
-            key-positions = <19 18>;
+            key-positions = <18 19>;
+        };
+
+        scroll {
+            timeout-ms = <50>;
+            bindings = <&mo SCROLL>;
+            key-positions = <28 29>;
         };
     };
 

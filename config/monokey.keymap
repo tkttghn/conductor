@@ -26,7 +26,7 @@
         compatible = "zmk,combos";
 
         combo_scroll_MB3 {
-            bindings = <&lt 5 MK_MB3>;
+            bindings = <&lt_mouse 5 MK_MB3>;
             key-positions = <17 18>;
             timeout-ms = <25>;
         };
@@ -54,13 +54,6 @@
             bindings = <&mkp MB2>;
             key-positions = <18 19>;
         };
-
-        combo_mb3 {
-            timeout-ms = <25>;
-            bindings = <&mkp MB3>;
-            key-positions = <27 28>;
-        };
-
     };
 
     macros {
@@ -109,6 +102,18 @@
                 , <&macro_tap &kp X>
                 , <&macro_release &kp LCTRL>
                 ;
+        };
+    };
+
+    behaviors {
+        // マウスボタンを対象とするレイヤータップの定義
+        lt_mouse: lt_mouse {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <200>;
+            // 1つ目の引数にレイヤー(&mo)、2つ目にマウスクリック(&mkp)を指定可能にする
+            bindings = <&mo>, <&mkp>;
         };
     };
 

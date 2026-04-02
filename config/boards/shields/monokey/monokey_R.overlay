@@ -48,8 +48,9 @@
         /* スクロールレイヤー: レイヤー5 (SCROLL) がアクティブ時
          * XY移動をスクロールホイールに変換
          * スクロール速度をスケーリング (1/8) で調整 */
+        /* takitate追記：レイヤー6を追加 */
         scroll_layer {
-            layers = <5>;
+            layers = <5 6>;
             input-processors = <&zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler>;
         };
     };

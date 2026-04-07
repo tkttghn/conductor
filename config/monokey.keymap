@@ -27,7 +27,7 @@
         lt_mouse: lt_mouse {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "tap-preferred";
+            flavor = "hold-preferred";
             tapping-term-ms = <200>;
             // 1つ目の引数にレイヤー(&mo)、2つ目にマウスクリック(&mkp)を指定可能にする
             bindings = <&mo>, <&mkp>;
@@ -73,9 +73,9 @@
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             bindings
-                = <&bt BT_SEL 0>     // プロファイル0を選択して接続試行
+                = <&to 0>            // レイヤー0へ移行
                 , <&macro_wait_time 200>    // 200ms 待機
-                , <&to 0>            // レイヤー0へ移行
+                , <&bt BT_SEL 0>     // プロファイル0を選択して接続試行
                 ;
         };
 
@@ -83,9 +83,9 @@
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             bindings
-                = <&bt BT_SEL 1>     // プロファイル1を選択して接続試行
+                = <&to 0>            // レイヤー0へ移行
                 , <&macro_wait_time 200>    // 200ms 待機
-                , <&to 0>            // レイヤー0へ移行
+                , <&bt BT_SEL 1>     // プロファイル1を選択して接続試行
                 ;
         };
 
@@ -93,9 +93,9 @@
             compatible = "zmk,behavior-macro";
             #binding-cells = <0>;
             bindings
-                = <&bt BT_SEL 3>     // プロファイル3を選択して接続試行
+                = <&to 1>            // レイヤー1へ移行
                 , <&macro_wait_time 200>    // 200ms 待機
-                , <&to 1>            // レイヤー1へ移行
+                , <&bt BT_SEL 3>     // プロファイル3を選択して接続試行
                 ;
         };
 

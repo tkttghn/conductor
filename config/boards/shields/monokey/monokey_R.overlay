@@ -30,12 +30,23 @@
         17 // K
         18 // L
     >;
-    require-prior-idle-ms = <300>;
-    // トラボ誤爆防止: タイピング後300ms経過しないとAMLが発動しない
+    require-prior-idle-ms = <750>;
+    // トラボ誤爆防止: タイピング後750ms経過しないとAMLが発動しない
+    require-prior-motion = <800>;
+    // モーション閾値: 累積移動量500未満ではAMLが発動しない（振動フィルタ）
 };
 
 
 / {
+    /* Reduce horizontal scroll sensitivity to prevent accidental triggering */
+    hwheel_scaler: hwheel_scaler {
+        compatible = "zmk,input-processor-scaler";
+        #input-processor-cells = <2>;
+        type = <INPUT_EV_REL>;
+        codes = <INPUT_REL_HWHEEL>;
+        track-remainders;
+    };
+
     trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
@@ -97,6 +108,7 @@
         spi-max-frequency = <2000000>;
         irq-gpios = <&gpio0 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
         cpi = <800>;
+        force-awake;
         evt-type = <INPUT_EV_REL>;
         x-input-code = <INPUT_REL_X>;
         y-input-code = <INPUT_REL_Y>;

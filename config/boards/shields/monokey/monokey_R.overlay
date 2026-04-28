@@ -58,6 +58,7 @@
         /* AML機能のコメントアウト(by takitate)
         input-processors = <&zip_temp_layer 4 5000>;
         */
+        input-processors = <&zip_xy_scaler 1 1>; // AMLの代わりに座標スケーラを定義
 
         /* スクロールレイヤー: レイヤー5 (SCROLL) がアクティブ時
          * XY移動をスクロールホイールに変換

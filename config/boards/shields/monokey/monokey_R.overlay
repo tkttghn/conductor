@@ -24,6 +24,7 @@
     nfct-pins-as-gpios;
 };
 
+/* AML機能のコメントアウト(by takitate)
 // 非マウスキーでAML解除
 &zip_temp_layer {
     excluded-positions = <
@@ -35,7 +36,7 @@
     require-prior-motion = <800>;
     // モーション閾値: 累積移動量500未満ではAMLが発動しない（振動フィルタ）
 };
-
+*/
 
 / {
     /* Reduce horizontal scroll sensitivity to prevent accidental triggering */
@@ -54,7 +55,9 @@
         /* ベース: オートマウスレイヤー (AML)
          * トラックボール操作時にレイヤー4 (MOUSE) を自動有効化
          * 5000ms (5秒) のタイムアウトで自動解除 */
+        /* AML機能のコメントアウト(by takitate)
         input-processors = <&zip_temp_layer 4 5000>;
+        */
 
         /* スクロールレイヤー: レイヤー5 (SCROLL) がアクティブ時
          * XY移動をスクロールホイールに変換

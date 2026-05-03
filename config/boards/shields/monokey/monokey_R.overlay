@@ -31,10 +31,10 @@
         17 // K
         18 // L
     >;
-    require-prior-idle-ms = <750>;
-    // トラボ誤爆防止: タイピング後750ms経過しないとAMLが発動しない
-    require-prior-motion = <800>;
-    // モーション閾値: 累積移動量500未満ではAMLが発動しない（振動フィルタ）
+    require-prior-idle-ms = <300>;
+    // タイピング後300ms経過でAMLが発動可能（100msだとsplit BLE通信ラグが顕著、750msだと反応鈍い）
+    require-prior-motion = <50>;
+    // モーション閾値50（元の値）: motion下げ(30)はAML発動頻度を増やしsplit BLEラグを悪化させると Codex が指摘、元に戻す
 };
 */
 
@@ -54,8 +54,8 @@
 
         /* ベース: オートマウスレイヤー (AML)
          * トラックボール操作時にレイヤー4 (MOUSE) を自動有効化
-         * 5000ms (5秒) のタイムアウトで自動解除 */
-        input-processors = <&zip_temp_layer 4 5000>;
+         * 60000ms (60秒) のタイムアウトで自動解除 */
+        input-processors = <&zip_temp_layer 4 60000>;
 
         /* スクロールレイヤー: レイヤー5 (SCROLL) がアクティブ時
          * XY移動をスクロールホイールに変換

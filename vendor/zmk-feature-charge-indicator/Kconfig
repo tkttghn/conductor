@@ -76,4 +76,50 @@ config CHG_BATTERY_COLOR_MISSING
 
 endif
 
+config CHG_LOW_BATTERY_INDICATOR
+    bool "Show solid color on low battery (when not charging)"
+    default n
+    help
+      y: While NOT charging and battery level is at or below threshold,
+         keep LEDs lit in a solid color and suppress widget output.
+         Resumes widget when battery rises above threshold or charging
+         starts (charging color takes priority).
+
+if CHG_LOW_BATTERY_INDICATOR
+
+config CHG_LOW_BATTERY_THRESHOLD
+    int "Low battery percentage threshold"
+    range 1 50
+    default 10
+
+config CHG_LOW_BATTERY_COLOR
+    int "Color for low battery (0-7)"
+    range 0 7
+    default 1
+    help
+      0 Black, 1 Red, 2 Green, 3 Yellow, 4 Blue, 5 Magenta, 6 Cyan, 7 White
+
+config CHG_CRITICAL_BATTERY_THRESHOLD
+    int "Critical battery percentage threshold (blink mode)"
+    range 0 50
+    default 5
+    help
+      When battery <= this threshold (and not charging), the LED blinks
+      using CHG_CRITICAL_BATTERY_COLOR. Should be <= CHG_LOW_BATTERY_THRESHOLD.
+      Set to 0 to disable blinking (use solid low-battery color all the way down).
+
+config CHG_CRITICAL_BATTERY_COLOR
+    int "Color for critical battery blink (0-7)"
+    range 0 7
+    default 1
+    help
+      0 Black, 1 Red, 2 Green, 3 Yellow, 4 Blue, 5 Magenta, 6 Cyan, 7 White
+
+config CHG_CRITICAL_BLINK_HALF_PERIOD_MS
+    int "Critical blink half-period in ms (on/off duration each)"
+    range 100 5000
+    default 500
+
+endif
+
 endmenu

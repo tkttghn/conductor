@@ -380,4 +380,3 @@ bool zmk_charge_indicator_is_charging(void)
 
 /* Run after widgets to make suppression predictable. */
 SYS_INIT(charge_indicator_init, APPLICATION, 70);
-t

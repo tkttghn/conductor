@@ -23,14 +23,14 @@ include:
   - board: xiao_ble//zmk
     shield: monokey_R rgbled_adapter
     snippet: studio-rpc-usb-uart
-    artifact-name: Conductor_R_v0.4.8
+    artifact-name: Conductor_R_v0.4.9
   - board: xiao_ble//zmk
     shield: monokey_L rgbled_adapter
-    artifact-name: Conductor_L_v0.4.8
+    artifact-name: Conductor_L_v0.4.9
   - board: xiao_ble//zmk
     shield: settings_reset
-    artifact-name: Conductor_reset_v0.4.8
+    artifact-name: Conductor_reset_v0.4.9
   - board: xiao_ble//zmk
     shield: monokey_R rgbled_adapter
     snippet: studio-rpc-usb-uart zmk-usb-logging
-    artifact-name: Conductor_R_v0.4.8_debug
+    artifact-name: Conductor_R_v0.4.9_debug

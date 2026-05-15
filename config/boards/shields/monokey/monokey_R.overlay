@@ -47,17 +47,6 @@
         track-remainders;
     };
 
-    /* Precision mode scaler: scales down pointer movement (X/Y) for
-     * fine control, e.g. when drafting. Applied only on PRECISION layer (7).
-     * Scale = numerator/denominator, e.g. 1/4 means 4x slower. */
-    pointer_scaler: pointer_scaler {
-        compatible = "zmk,input-processor-scaler";
-        #input-processor-cells = <2>;
-        type = <INPUT_EV_REL>;
-        codes = <INPUT_REL_X INPUT_REL_Y>;
-        track-remainders;
-    };
-
     trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
@@ -76,11 +65,12 @@
         };
 
         /* 精密モード: レイヤー12 (PRECISION) がアクティブ時、
-         * カーソル移動を 1/4 にスケールダウン。製図など細かい操作向け。
-         * トグルキー（&tog 12）で ON/OFF 可能。 */
+         * カーソル移動を Studio から動的に変更可能な倍率でスケールダウン。
+         * 既定 1/4。Conductor Studio の Trackball タブで変更可能。
+         * トグルキー（&tog 12）で ON/OFF。 */
         precision_layer {
             layers = <12>;
-            input-processors = <&pointer_scaler 1 4>;
+            input-processors = <&studio_pointer_scaler>;
         };
     };
 

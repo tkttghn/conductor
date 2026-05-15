@@ -75,11 +75,11 @@
             input-processors = <&zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
         };
 
-        /* 精密モード: レイヤー7 (PRECISION) がアクティブ時、
+        /* 精密モード: レイヤー12 (PRECISION) がアクティブ時、
          * カーソル移動を 1/4 にスケールダウン。製図など細かい操作向け。
-         * トグルキー（&tog 7）で ON/OFF 可能。 */
+         * トグルキー（&tog 12）で ON/OFF 可能。 */
         precision_layer {
-            layers = <7>;
+            layers = <12>;
             input-processors = <&pointer_scaler 1 4>;
         };
     };

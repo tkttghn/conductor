@@ -229,5 +229,16 @@
             &trans  &trans  &trans  &trans  &trans  &trans  &trans  &bootloader                                      &bt BT_CLR      &bt BT_CLR_ALL
             >;
         };
+        /* PRECISION layer (id=12): when active, trackball movement is scaled
+         * down for fine cursor control (drafting, detailed work). Toggle with
+         * &tog 12. All keys pass through to the layer below (&trans). */
+        precision_layer {
+            bindings = <
+&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans
+            >;
+        };
     };
 };

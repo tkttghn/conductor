@@ -48,6 +48,17 @@
         track-remainders;
     };
 
+    /* Precision mode scaler: scales down pointer movement (X/Y) for
+     * fine control, e.g. when drafting. Applied only on PRECISION layer (7).
+     * Scale = numerator/denominator, e.g. 1/4 means 4x slower. */
+    pointer_scaler: pointer_scaler {
+        compatible = "zmk,input-processor-scaler";
+        #input-processor-cells = <2>;
+        type = <INPUT_EV_REL>;
+        codes = <INPUT_REL_X INPUT_REL_Y>;
+        track-remainders;
+    };
+
     trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
@@ -63,7 +74,15 @@
         /* takitate追記：レイヤー6を追加 */
         scroll_layer {
             layers = <5 6>;
-            input-processors = <&zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler>;
+            input-processors = <&zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
+        };
+
+        /* 精密モード: レイヤー12 (PRECISION) がアクティブ時、
+         * カーソル移動を 1/4 にスケールダウン。製図など細かい操作向け。
+         * トグルキー（&tog 12）で ON/OFF 可能。 */
+        precision_layer {
+            layers = <12>;
+            input-processors = <&pointer_scaler 1 4>;
         };
     };
 

@@ -160,13 +160,15 @@
 
         /* PRECISION layer (id=12): when active, trackball movement is scaled
          * down for fine cursor control (drafting, detailed work). Toggle with
-         * &tog 12. All keys pass through to the layer below (&trans). */
+         * &tog 12. Default bindings mirror mouse_layer so MB1-3 are reachable
+         * during precision use; other keys are intentionally NONE to prevent
+         * accidental typing while focused on cursor work. */
         precision_layer {
             bindings = <
-&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans
+&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
+&none  &none  &none  &none  &none    &none  &none  &mkp MB1  &mkp MB2  &mkp MB3
+&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
+&none  &none  &none  &none  &none  &none    &none  &none  &none  &none
             >;
         };
 

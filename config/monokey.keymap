@@ -179,7 +179,7 @@
         win_scroll_layer {
             bindings = <
                 &kp C_BRI_DEC   &kp C_BRI_INC  &none       &kp LG(MINUS)          &kp LS(LG(EQUAL))                     &mkp MB5       &none         &none            &none              &kp LG(UP)
-                &kp C_VOL_DN    &kp C_VOL_UP   &kp C_MUTE  &kp LG(RIGHT)          &none                                 &mkp MB4       &none         &kp LG(LS(LEFT)) &kp LA(LC(LG(L)))  &trans
+                &kp C_VOL_DN    &kp C_VOL_UP   &kp C_MUTE  &kp LG(RIGHT)          &none                                 &mkp MB4       &none         &kp LG(LS(LEFT))  &kp LA(LC(LG(L)))  &trans
                 &kp LEFT_SHIFT  &none          &none       &none                  &kp LG(LEFT)                          &kp LG(DOWN)   &none         &kp LG(UP)       &none              &kp RIGHT_SHIFT
                 &trans          &trans         &trans      &trans                 &mo 11                &trans  &trans  &trans                                       &trans             &trans
             >;

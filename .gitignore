@@ -1,0 +1,10 @@
+# Local west workspace dependencies
+.west/
+modules/
+optional/
+zephyr/
+zmk/
+zmk-pmw3610-driver/
+
+# Local build outputs
+build/

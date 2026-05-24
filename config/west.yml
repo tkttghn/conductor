@@ -11,7 +11,7 @@ manifest:
   projects:
     - name: zmk
       remote: pite1222
-      revision: feat/pointing-studio
+      revision: 99377474231b04ca7d84b4da2fb447b01edef963
       import: app/west.yml
     - name: zmk-studio-messages
       remote: pite1222

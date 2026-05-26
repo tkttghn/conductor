@@ -8,3 +8,11 @@ zmk-pmw3610-driver/
 
 # Local build outputs
 build/
+
+# macOS metadata
+.DS_Store
+
+# Local build helpers
+Makefile
+scripts/build-local-artifacts.sh
+local-build/

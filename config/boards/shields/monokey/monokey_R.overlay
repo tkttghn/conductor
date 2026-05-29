@@ -58,7 +58,7 @@
         cooldown-ms = <220>;
         tap-ms = <30>;
         layer-id = <13>;
-        positions = <7 26 16 18>; /* up=I, down=M, left=J, right=L */
+        positions = <7 27 16 18>; /* up=I, down=COMMA, left=J, right=L */
     };
 
     trackball_listener {

@@ -18,7 +18,8 @@
 #
 ---
 include:
-  # Naming: <target>_conductor_v<version>[_debug]
+  # Naming: <target>_conductor_v<version>
+  # Debug builds use <target>_debug_conductor_v<version>.
   # Bump the version number on every release.
   - board: xiao_ble//zmk
     shield: monokey_R rgbled_adapter
@@ -33,4 +34,4 @@ include:
   - board: xiao_ble//zmk
     shield: monokey_R rgbled_adapter
     snippet: studio-rpc-usb-uart zmk-usb-logging
-    artifact-name: R_conductor_v0.4.17_rc1_debug
+    artifact-name: R_debug_conductor_v0.4.17_rc1

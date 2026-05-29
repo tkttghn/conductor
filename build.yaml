@@ -20,6 +20,8 @@
 include:
   # Naming: <target>_conductor_v<version>
   # Debug builds use <target>_debug_conductor_v<version>.
+  # Reset builds use reset_conductor_v<version>.
+  # Keep the target/purpose first so GitHub and Finder lists are easy to scan.
   # Bump the version number on every release.
   - board: xiao_ble//zmk
     shield: monokey_R rgbled_adapter

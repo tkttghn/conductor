@@ -181,9 +181,9 @@
         /* GESTURE layer (id=13): I/J/L/COMMA map to up/left/right/down gestures. */
         gesture_layer {
             bindings = <
-&none  &none  &none  &none  &none    &none  &none  &kp LC(UP)  &none  &none
-&none  &none  &none  &none  &none    &none  &kp LC(LEFT)  &none  &kp LC(RIGHT)  &none
 &none  &none  &none  &none  &none    &none  &none  &kp LC(DOWN)  &none  &none
+&none  &none  &none  &none  &none    &none  &kp LC(RIGHT)  &none  &kp LC(LEFT)  &none
+&none  &none  &none  &none  &none    &none  &none  &kp LC(UP)  &none  &none
 &none  &none  &none  &none  &none  &none    &none  &none  &none  &none
             >;
         };

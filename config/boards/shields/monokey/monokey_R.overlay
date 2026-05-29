@@ -47,6 +47,20 @@
         track-remainders;
     };
 
+    trackball_gestures: trackball_gestures {
+        compatible = "zmk,input-processor-gestures";
+        #input-processor-cells = <0>;
+        type = <INPUT_EV_REL>;
+        x-code = <INPUT_REL_X>;
+        y-code = <INPUT_REL_Y>;
+        threshold = <120>;
+        timeout-ms = <180>;
+        cooldown-ms = <220>;
+        tap-ms = <30>;
+        layer-id = <13>;
+        positions = <0 1 2 3>;
+    };
+
     trackball_listener {
         compatible = "zmk,input-listener";
         device = <&trackball>;
@@ -62,6 +76,11 @@
         scroll_layer {
             layers = <5>;
             input-processors = <&zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
+        };
+
+        gesture_layer {
+            layers = <13>;
+            input-processors = <&trackball_gestures>;
         };
 
         /* 精密モード: レイヤー12 (PRECISION) がアクティブ時、

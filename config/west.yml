@@ -11,7 +11,7 @@ manifest:
   projects:
     - name: zmk
       remote: pite1222
-      revision: feat/pointing-studio
+      revision: fix/allow-disable-auto-phy
       import: app/west.yml
     - name: zmk-studio-messages
       remote: pite1222

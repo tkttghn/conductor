@@ -20,10 +20,10 @@ GitHub Actions の firmware artifact は、Finder やダウンロード一覧で
 
 例:
 
-- `R_conductor_v0.4.17_rc1.uf2`
-- `L_conductor_v0.4.17_rc1.uf2`
-- `R_debug_conductor_v0.4.17_rc1.uf2`
-- `reset_conductor_v0.4.17_rc1.uf2`
+- `R_conductor_v0.5.0.uf2`
+- `L_conductor_v0.5.0.uf2`
+- `R_debug_conductor_v0.5.0.uf2`
+- `reset_conductor_v0.5.0.uf2`
 
 `artifact-name` を更新するときは `build.yaml` でもこの規則を維持します。
 

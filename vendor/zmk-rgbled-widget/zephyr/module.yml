@@ -1,5 +1,7 @@
+name: zmk-rgbled-widget
 build:
-  cmake-ext: true
+  cmake: .
   kconfig: Kconfig
   settings:
     board_root: .
+    dts_root: .

@@ -1,0 +1,3 @@
+config CONDUCTOR_FIRMWARE_VERSION
+    string "Conductor firmware version"
+    default "0.4.1 beta"

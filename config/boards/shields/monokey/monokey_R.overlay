@@ -48,15 +48,18 @@
         track-remainders;
     };
 
-    /* Precision mode scaler: scales down pointer movement (X/Y) for
-     * fine control, e.g. when drafting. Applied only on PRECISION layer (7).
-     * Scale = numerator/denominator, e.g. 1/4 means 4x slower. */
-    pointer_scaler: pointer_scaler {
-        compatible = "zmk,input-processor-scaler";
-        #input-processor-cells = <2>;
+    trackball_gestures: trackball_gestures {
+        compatible = "zmk,input-processor-gestures";
+        #input-processor-cells = <0>;
         type = <INPUT_EV_REL>;
-        codes = <INPUT_REL_X INPUT_REL_Y>;
-        track-remainders;
+        x-code = <INPUT_REL_X>;
+        y-code = <INPUT_REL_Y>;
+        threshold = <120>;
+        timeout-ms = <180>;
+        cooldown-ms = <220>;
+        tap-ms = <30>;
+        layer-id = <13>;
+        positions = <7 27 16 18>; /* up=I, down=COMMA, left=J, right=L */
     };
 
     trackball_listener {
@@ -77,12 +80,18 @@
             input-processors = <&zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
         };
 
+        gesture_layer {
+            layers = <13>;
+            input-processors = <&trackball_gestures>;
+        };
+
         /* 精密モード: レイヤー12 (PRECISION) がアクティブ時、
-         * カーソル移動を 1/4 にスケールダウン。製図など細かい操作向け。
-         * トグルキー（&tog 12）で ON/OFF 可能。 */
+         * カーソル移動を Studio から動的に変更可能な倍率でスケールダウン。
+         * 既定 1/4。Conductor Studio の Trackball タブで変更可能。
+         * トグルキー（&tog 12）で ON/OFF。 */
         precision_layer {
             layers = <12>;
-            input-processors = <&pointer_scaler 1 4>;
+            input-processors = <&studio_pointer_scaler>;
         };
     };
 

@@ -43,6 +43,12 @@
             timeout-ms = <25>;
         };
 
+        combo_gesture {
+            bindings = <&mo 13>;
+            key-positions = <7 8>;
+            timeout-ms = <50>;
+        };
+
         combo_pair {
             bindings = <&bt BT_SEL 5>;
             key-positions = <0 10 20>;
@@ -231,14 +237,27 @@
         };
         /* PRECISION layer (id=12): when active, trackball movement is scaled
          * down for fine cursor control (drafting, detailed work). Toggle with
-         * &tog 12. All keys pass through to the layer below (&trans). */
+         * &tog 12. Default bindings mirror mouse_layer so MB1-3 are reachable
+         * during precision use; other keys are intentionally NONE to prevent
+         * accidental typing while focused on cursor work. */
         precision_layer {
             bindings = <
-&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
-&trans  &trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans
+                &none  &none  &none  &none  &none                  &none  &none     &none     &none     &none
+                &none  &none  &none  &none  &none                  &none  &none     &mkp MB1  &mkp MB2  &mkp MB3
+                &none  &none  &none  &none  &none                  &none  &none     &none     &none     &none
+                &none  &none  &none  &none  &none  &none  &none  &none                  &none     &tog 12
             >;
         };
+
+        /* GESTURE layer (id=13): I/J/L/COMMA map to up/left/right/down gestures. */
+        gesture_layer {
+            bindings = <
+                &none  &none  &none  &none  &none                  &none  &none          &kp LC(DOWN)  &none         &none
+                &none  &none  &none  &none  &none                  &none  &kp LC(RIGHT)  &none         &kp LC(LEFT)  &none
+                &none  &none  &none  &none  &none                  &none  &none          &kp LC(UP)    &none         &none
+                &none  &none  &none  &none  &none  &none  &none  &none                               &none         &none
+            >;
+        };
+
     };
 };

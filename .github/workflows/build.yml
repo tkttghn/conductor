@@ -102,6 +102,8 @@ jobs:
         shell: sh -x {0}
         run: |
           mkdir build/artifacts
+          # Keep user-facing names aligned with build.yaml:
+          # <target>_conductor_v<version>, <target>_debug_conductor_v<version>, or reset_conductor_v<version>.
           if [ -f "build/zephyr/zmk.uf2" ]; then
             artifact_name="${{ matrix.artifact-name || format('{0}{1}', matrix.shield && format('{0}-', matrix.shield) || '', matrix.board) }}"
             artifact_name=$(echo "${artifact_name}" | tr '/' '-' | tr ' ' '_')

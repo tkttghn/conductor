@@ -320,6 +320,14 @@ config RGBLED_WIDGET_PROFILE_5_COLOR
     range 0 7
     default 3
 
+config RGBLED_WIDGET_PROFILE_BLINK_FAST_MS
+    int "Profile-state fast blink half-period (unregistered), ms"
+    default 150
+
+config RGBLED_WIDGET_PROFILE_BLINK_SLOW_MS
+    int "Profile-state slow blink half-period (paired but disconnected), ms"
+    default 700
+
 endif # RGBLED_WIDGET
 
 DT_COMPAT_ZMK_BEHAVIOR_RGBLED_WIDGET := zmk,behavior-rgbled-widget

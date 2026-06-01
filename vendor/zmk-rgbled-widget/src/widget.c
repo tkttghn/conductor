@@ -437,6 +437,11 @@ static uint8_t profile_color_idx[] = {
     CONFIG_RGBLED_WIDGET_PROFILE_4_COLOR, CONFIG_RGBLED_WIDGET_PROFILE_5_COLOR,
 };
 
+// Profile connection-state blink: 0 = steady (connected); >0 = blink half-period
+// in ms (fast = unregistered/no bond, slow = paired but disconnected).
+static uint16_t profile_blink_period = 0;
+static bool profile_blink_on = true;
+
 void update_profile_color(bool force) {
     // Do not override profile color while charging; charge_indicator owns the LED
     if (IS_CHARGING()) {
@@ -451,10 +456,24 @@ void update_profile_color(bool force) {
         index = ARRAY_SIZE(profile_color_idx) - 1;
     }
 
-    if (force || led_layer_color != profile_color_idx[index]) {
+    // Connection state -> blink mode: unregistered (no bond) = fast blink,
+    // paired but disconnected = slow blink, connected = steady.
+    uint16_t period;
+    if (zmk_ble_active_profile_is_open()) {
+        period = CONFIG_RGBLED_WIDGET_PROFILE_BLINK_FAST_MS;
+    } else if (!zmk_ble_active_profile_is_connected()) {
+        period = CONFIG_RGBLED_WIDGET_PROFILE_BLINK_SLOW_MS;
+    } else {
+        period = 0;
+    }
+
+    if (force || led_layer_color != profile_color_idx[index] || profile_blink_period != period) {
         led_layer_color = profile_color_idx[index];
+        profile_blink_period = period;
+        profile_blink_on = true;
         struct blink_item color = {.color = led_layer_color};
-        LOG_INF("Setting profile color to %s for profile %d", color_names[led_layer_color], index);
+        LOG_INF("Profile %d color %s, blink period %dms", index, color_names[led_layer_color],
+                period);
         k_msgq_put(&led_msgq, &color, K_NO_WAIT);
     }
 }
@@ -547,7 +566,20 @@ extern void led_process_thread(void *d0, void *d1, void *d2) {
     while (true) {
         // wait until a blink item is received and process it
         struct blink_item blink;
+#if SHOW_PROFILE_COLORS
+        // While a profile-state blink is active, wake periodically to toggle the
+        // LED. Charging / critical battery own the LED, so pause blinking then.
+        k_timeout_t wait = (profile_blink_period > 0 && !critical_steady_active && !IS_CHARGING())
+                               ? K_MSEC(profile_blink_period)
+                               : K_FOREVER;
+        if (k_msgq_get(&led_msgq, &blink, wait) != 0) {
+            profile_blink_on = !profile_blink_on;
+            set_rgb_leds(profile_blink_on ? led_layer_color : 0, 0);
+            continue;
+        }
+#else
         k_msgq_get(&led_msgq, &blink, K_FOREVER);
+#endif
 
         if (blink.persistent) {
             // Persistent (steady) light: set color and keep it on indefinitely

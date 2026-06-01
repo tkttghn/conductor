@@ -20,6 +20,7 @@
 #include <zmk/split/central.h>
 
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
+#include <zmk/split/layer_state.h>
 #include <zmk/events/split_layer_state_changed.h>
 #endif
 
@@ -623,8 +624,12 @@ extern void led_init_thread(void *d0, void *d1, void *d2) {
 #endif // SHOW_PROFILE_COLORS
 
 #if SHOW_PERIPHERAL_LAYER_COLORS
-    LOG_INF("Setting initial peripheral layer color");
-    update_peripheral_layer_color(0);
+    // Apply any layer the central pushed while we were still booting: the
+    // battery indication keeps `initialized` false, so the listener dropped it.
+    uint8_t initial_layer = 0;
+    zmk_split_peripheral_get_layer(&initial_layer);
+    LOG_INF("Setting initial peripheral layer color (layer %d)", initial_layer);
+    update_peripheral_layer_color(initial_layer);
 #endif // SHOW_PERIPHERAL_LAYER_COLORS
 
     initialized = true;

@@ -11,11 +11,11 @@ manifest:
   projects:
     - name: zmk
       remote: pite1222
-      revision: feature/split-layer-state
+      revision: release/conductor-0.5.1
       import: app/west.yml
     - name: zmk-studio-messages
       remote: pite1222
-      revision: feat/pointing
+      revision: release/conductor-0.5.1
       path: modules/msgs/zmk-studio-messages
     - name: zmk-pmw3610-driver
       remote: badjeff

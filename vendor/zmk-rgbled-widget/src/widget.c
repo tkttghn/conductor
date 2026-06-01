@@ -552,6 +552,23 @@ ZMK_LISTENER(led_layer_listener, led_layer_listener_cb);
 ZMK_SUBSCRIPTION(led_layer_listener, zmk_layer_state_changed);
 #endif // SHOW_LAYER_CHANGE
 
+#if SHOW_PROFILE_COLORS
+// charge_indicator owns the LED while charging or showing a low/critical battery
+// warning; the profile-state blink must not fight it.
+static inline bool charge_indicator_owns_led(void) {
+    if (IS_CHARGING()) {
+        return true;
+    }
+#if IS_ENABLED(CONFIG_CHARGE_INDICATOR) && IS_ENABLED(CONFIG_CHG_LOW_BATTERY_INDICATOR)
+    uint8_t soc = zmk_battery_state_of_charge();
+    if (soc > 0 && soc <= CONFIG_CHG_LOW_BATTERY_THRESHOLD) {
+        return true;
+    }
+#endif
+    return false;
+}
+#endif // SHOW_PROFILE_COLORS
+
 extern void led_process_thread(void *d0, void *d1, void *d2) {
     ARG_UNUSED(d0);
     ARG_UNUSED(d1);
@@ -567,14 +584,17 @@ extern void led_process_thread(void *d0, void *d1, void *d2) {
         // wait until a blink item is received and process it
         struct blink_item blink;
 #if SHOW_PROFILE_COLORS
-        // While a profile-state blink is active, wake periodically to toggle the
-        // LED. Charging / critical battery own the LED, so pause blinking then.
-        k_timeout_t wait = (profile_blink_period > 0 && !critical_steady_active && !IS_CHARGING())
-                               ? K_MSEC(profile_blink_period)
-                               : K_FOREVER;
+        // Wake periodically while a profile-state blink is configured (even while
+        // charging) so we resume promptly once the charge indicator releases the LED.
+        k_timeout_t wait =
+            (profile_blink_period > 0 && !critical_steady_active) ? K_MSEC(profile_blink_period)
+                                                                  : K_FOREVER;
         if (k_msgq_get(&led_msgq, &blink, wait) != 0) {
-            profile_blink_on = !profile_blink_on;
-            set_rgb_leds(profile_blink_on ? led_layer_color : 0, 0);
+            // Don't fight the charge indicator (charging or low/critical warning).
+            if (!charge_indicator_owns_led()) {
+                profile_blink_on = !profile_blink_on;
+                set_rgb_leds(profile_blink_on ? led_layer_color : 0, 0);
+            }
             continue;
         }
 #else

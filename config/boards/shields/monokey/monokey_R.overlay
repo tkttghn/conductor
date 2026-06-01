@@ -9,14 +9,13 @@
 
 &xiao_serial { status = "disabled"; };
 
-/* Disable the xiao_ble board's default console CDC ACM.
- * boards/seeed/xiao_ble pulls in boards/common/usb/cdc_acm_serial.dtsi, which
- * enables board_cdc_acm_uart as a USB serial. Together with the
- * studio-rpc-usb-uart snippet's own CDC ACM this enumerates TWO usbmodem ports,
- * so Conductor Studio's USB picker shows two identical "conductor" devices and
- * only the Studio RPC one works. Disabling it leaves a single CDC ACM.
- * Safe: console is unused unless CONFIG_ZMK_USB_LOGGING=y (debug build, which
- * routes its console to its own logging CDC ACM, not this one). */
+/* Disable the xiao_ble board's default console CDC ACM so USB exposes only the
+ * Studio RPC serial. boards/common/usb/cdc_acm_serial.dtsi (pulled in by
+ * seeed/xiao_ble) creates board_cdc_acm_uart, which with the studio-rpc-usb-uart
+ * snippet's CDC ACM made TWO "conductor" usbmodem ports (only the RPC one works).
+ * Must pair with CONFIG_BOARD_SERIAL_BACKEND_CDC_ACM=n in monokey_R.conf: that
+ * turns off the console backend so uart_console.c does not reference this now
+ * disabled node (otherwise the non-logging build fails to link). */
 &board_cdc_acm_uart { status = "disabled"; };
 
 &kscan0 {

@@ -11,7 +11,7 @@ manifest:
   projects:
     - name: zmk
       remote: pite1222
-      revision: release/conductor-0.5.0
+      revision: feature/split-layer-state
       import: app/west.yml
     - name: zmk-studio-messages
       remote: pite1222

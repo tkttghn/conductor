@@ -19,6 +19,10 @@
 
 #include <zmk/split/central.h>
 
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
+#include <zmk/events/split_layer_state_changed.h>
+#endif
+
 #include <zephyr/logging/log.h>
 
 #include <zmk_rgbled_widget/widget.h>
@@ -63,7 +67,7 @@ static const uint8_t rgb_idx[] = {DT_NODE_CHILD_IDX(DT_ALIAS(led_red)),
 static const char *color_names[] = {"black", "red",     "green", "yellow",
                                     "blue",  "magenta", "cyan",  "white"};
 
-#if SHOW_LAYER_COLORS
+#if SHOW_LAYER_COLORS || SHOW_PERIPHERAL_LAYER_COLORS
 static uint8_t layer_color_idx[] = {
     CONFIG_RGBLED_WIDGET_LAYER_0_COLOR,  CONFIG_RGBLED_WIDGET_LAYER_1_COLOR,
     CONFIG_RGBLED_WIDGET_LAYER_2_COLOR,  CONFIG_RGBLED_WIDGET_LAYER_3_COLOR,
@@ -455,6 +459,41 @@ void update_profile_color(bool force) {
 }
 #endif // SHOW_PROFILE_COLORS
 
+#if SHOW_PERIPHERAL_LAYER_COLORS
+// Peripheral has no keymap; the central pushes the active layer index over the
+// split link. Map it to a color via the same layer_color_idx table.
+void update_peripheral_layer_color(uint8_t layer) {
+    // Do not override while charging; charge_indicator owns the LED
+    if (IS_CHARGING()) {
+        LOG_DBG("Skipping peripheral layer color update while charging");
+        return;
+    }
+
+    if (layer >= ARRAY_SIZE(layer_color_idx)) {
+        layer = ARRAY_SIZE(layer_color_idx) - 1;
+    }
+
+    if (led_layer_color != layer_color_idx[layer]) {
+        led_layer_color = layer_color_idx[layer];
+        struct blink_item color = {.color = led_layer_color};
+        LOG_INF("Setting peripheral layer color to %s for layer %d", color_names[led_layer_color],
+                layer);
+        k_msgq_put(&led_msgq, &color, K_NO_WAIT);
+    }
+}
+
+static int peripheral_layer_listener_cb(const zmk_event_t *eh) {
+    struct zmk_split_layer_state_changed *ev = as_zmk_split_layer_state_changed(eh);
+    if (ev != NULL && initialized) {
+        update_peripheral_layer_color(ev->layer);
+    }
+    return 0;
+}
+
+ZMK_LISTENER(peripheral_layer_listener, peripheral_layer_listener_cb);
+ZMK_SUBSCRIPTION(peripheral_layer_listener, zmk_split_layer_state_changed);
+#endif // SHOW_PERIPHERAL_LAYER_COLORS
+
 #if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 void indicate_layer(void) {
     uint8_t index = zmk_keymap_highest_layer_active();
@@ -582,6 +621,11 @@ extern void led_init_thread(void *d0, void *d1, void *d2) {
     LOG_INF("Setting initial profile color");
     update_profile_color(true);
 #endif // SHOW_PROFILE_COLORS
+
+#if SHOW_PERIPHERAL_LAYER_COLORS
+    LOG_INF("Setting initial peripheral layer color");
+    update_peripheral_layer_color(0);
+#endif // SHOW_PERIPHERAL_LAYER_COLORS
 
     initialized = true;
     LOG_INF("Finished initializing LED widget");

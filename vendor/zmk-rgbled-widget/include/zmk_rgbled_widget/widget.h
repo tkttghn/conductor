@@ -11,6 +11,13 @@
     (IS_ENABLED(CONFIG_RGBLED_WIDGET_SHOW_PROFILE_COLORS)) && (IS_ENABLED(CONFIG_ZMK_BLE)) &&       \
         (!IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
 
+// A split peripheral has no keymap; it shows layer color from the index the
+// central pushes over CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE.
+#define SHOW_PERIPHERAL_LAYER_COLORS                                                                \
+    (IS_ENABLED(CONFIG_RGBLED_WIDGET_SHOW_LAYER_COLORS)) && IS_ENABLED(CONFIG_ZMK_SPLIT) &&         \
+        !IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL) &&                                               \
+        IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
+
 #if IS_ENABLED(CONFIG_ZMK_BATTERY_REPORTING)
 void indicate_battery(void);
 #endif

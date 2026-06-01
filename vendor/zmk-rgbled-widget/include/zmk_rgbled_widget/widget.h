@@ -6,6 +6,11 @@
     (IS_ENABLED(CONFIG_RGBLED_WIDGET_SHOW_LAYER_COLORS)) &&                                        \
         (!IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
 
+// Profiles only exist on the BLE central, so gate on CONFIG_ZMK_BLE as well
+#define SHOW_PROFILE_COLORS                                                                         \
+    (IS_ENABLED(CONFIG_RGBLED_WIDGET_SHOW_PROFILE_COLORS)) && (IS_ENABLED(CONFIG_ZMK_BLE)) &&       \
+        (!IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
+
 #if IS_ENABLED(CONFIG_ZMK_BATTERY_REPORTING)
 void indicate_battery(void);
 #endif

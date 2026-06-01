@@ -286,6 +286,40 @@ config RGBLED_WIDGET_LAYER_31_COLOR
     range 0 7
     default 0
 
+# Constant per-profile color settings (BLE central only)
+config RGBLED_WIDGET_SHOW_PROFILE_COLORS
+    bool "Use custom colors per active BLE profile (central only)"
+
+config RGBLED_WIDGET_PROFILE_0_COLOR
+    int "Color to use for BLE profile 0"
+    range 0 7
+    default 7
+
+config RGBLED_WIDGET_PROFILE_1_COLOR
+    int "Color to use for BLE profile 1"
+    range 0 7
+    default 4
+
+config RGBLED_WIDGET_PROFILE_2_COLOR
+    int "Color to use for BLE profile 2"
+    range 0 7
+    default 2
+
+config RGBLED_WIDGET_PROFILE_3_COLOR
+    int "Color to use for BLE profile 3"
+    range 0 7
+    default 5
+
+config RGBLED_WIDGET_PROFILE_4_COLOR
+    int "Color to use for BLE profile 4"
+    range 0 7
+    default 6
+
+config RGBLED_WIDGET_PROFILE_5_COLOR
+    int "Color to use for BLE profile 5"
+    range 0 7
+    default 3
+
 endif # RGBLED_WIDGET
 
 DT_COMPAT_ZMK_BEHAVIOR_RGBLED_WIDGET := zmk,behavior-rgbled-widget

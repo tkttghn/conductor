@@ -49,6 +49,10 @@ BUILD_ASSERT(!(SHOW_LAYER_CHANGE && SHOW_LAYER_COLORS),
              "CONFIG_RGBLED_WIDGET_SHOW_LAYER_CHANGE and CONFIG_RGBLED_WIDGET_SHOW_LAYER_COLORS "
              "are mutually exclusive");
 
+BUILD_ASSERT(!(SHOW_LAYER_COLORS && SHOW_PROFILE_COLORS),
+             "CONFIG_RGBLED_WIDGET_SHOW_LAYER_COLORS and CONFIG_RGBLED_WIDGET_SHOW_PROFILE_COLORS "
+             "are mutually exclusive");
+
 // GPIO-based LED device and indices of red/green/blue LEDs inside its DT node
 static const struct device *led_dev = DEVICE_DT_GET(LED_GPIO_NODE_ID);
 static const uint8_t rgb_idx[] = {DT_NODE_CHILD_IDX(DT_ALIAS(led_red)),
@@ -131,6 +135,10 @@ static void set_rgb_leds(uint8_t color, uint16_t duration_ms) {
 // separate thread
 K_MSGQ_DEFINE(led_msgq, sizeof(struct blink_item), 16, 1);
 
+#if SHOW_PROFILE_COLORS
+void update_profile_color(bool force);
+#endif
+
 static void indicate_connectivity_internal(void) {
     struct blink_item blink = {.duration_ms = CONFIG_RGBLED_WIDGET_CONN_BLINK_MS};
 
@@ -181,6 +189,9 @@ static void indicate_connectivity_internal(void) {
 static int led_output_listener_cb(const zmk_event_t *eh) {
     if (initialized) {
         indicate_connectivity();
+#if SHOW_PROFILE_COLORS
+        update_profile_color(false);
+#endif
     }
     return 0;
 }
@@ -294,14 +305,19 @@ static int led_battery_listener_cb(const zmk_event_t *eh) {
         k_msgq_put(&led_msgq, &steady, K_NO_WAIT);
     } else if (battery_level > CONFIG_RGBLED_WIDGET_BATTERY_LEVEL_CRITICAL &&
                critical_steady_active) {
-        // Battery recovered above critical: clear steady light
+        // Battery recovered above critical: clear steady light. Use a persistent
+        // item so the process thread drops critical_steady_active in the persistent
+        // branch; a non-persistent color=0 item is ignored while the flag is set.
         LOG_INF("Battery recovered above critical (%d%%), clearing steady light", battery_level);
         struct blink_item clear = {
             .color = 0,
             .duration_ms = 0,
-            .persistent = false,
+            .persistent = true,
         };
         k_msgq_put(&led_msgq, &clear, K_NO_WAIT);
+#if SHOW_PROFILE_COLORS
+        update_profile_color(true);
+#endif
     }
     return 0;
 }
@@ -409,6 +425,36 @@ static int rgbled_settings_init(void) {
 SYS_INIT(rgbled_settings_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 #endif // SHOW_LAYER_COLORS
 
+#if SHOW_PROFILE_COLORS
+static uint8_t profile_color_idx[] = {
+    CONFIG_RGBLED_WIDGET_PROFILE_0_COLOR, CONFIG_RGBLED_WIDGET_PROFILE_1_COLOR,
+    CONFIG_RGBLED_WIDGET_PROFILE_2_COLOR, CONFIG_RGBLED_WIDGET_PROFILE_3_COLOR,
+    CONFIG_RGBLED_WIDGET_PROFILE_4_COLOR, CONFIG_RGBLED_WIDGET_PROFILE_5_COLOR,
+};
+
+void update_profile_color(bool force) {
+    // Do not override profile color while charging; charge_indicator owns the LED
+    if (IS_CHARGING()) {
+        LOG_DBG("Skipping profile color update while charging");
+        return;
+    }
+
+    uint8_t index = zmk_ble_active_profile_index();
+    // Clamp out-of-range profiles (e.g. if BT_MAX_PAIRED grows past the color
+    // table) to the last defined color so the LED never freezes on a stale one.
+    if (index >= ARRAY_SIZE(profile_color_idx)) {
+        index = ARRAY_SIZE(profile_color_idx) - 1;
+    }
+
+    if (force || led_layer_color != profile_color_idx[index]) {
+        led_layer_color = profile_color_idx[index];
+        struct blink_item color = {.color = led_layer_color};
+        LOG_INF("Setting profile color to %s for profile %d", color_names[led_layer_color], index);
+        k_msgq_put(&led_msgq, &color, K_NO_WAIT);
+    }
+}
+#endif // SHOW_PROFILE_COLORS
+
 #if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 void indicate_layer(void) {
     uint8_t index = zmk_keymap_highest_layer_active();
@@ -468,7 +514,9 @@ extern void led_process_thread(void *d0, void *d1, void *d2) {
             LOG_DBG("Got a persistent (steady) item from msgq, color %d", blink.color);
             critical_steady_active = (blink.color != 0);
             set_rgb_leds(blink.color, 0);
-            led_layer_color = 0; // override layer color while critical is active
+            if (critical_steady_active) {
+                led_layer_color = 0; // override base color only while critical is active
+            }
         } else if (blink.duration_ms > 0) {
             LOG_DBG("Got a blink item from msgq, color %d, duration %d", blink.color,
                     blink.duration_ms);
@@ -529,6 +577,11 @@ extern void led_init_thread(void *d0, void *d1, void *d2) {
     LOG_INF("Setting initial layer color");
     update_layer_color();
 #endif // SHOW_LAYER_COLORS
+
+#if SHOW_PROFILE_COLORS
+    LOG_INF("Setting initial profile color");
+    update_profile_color(true);
+#endif // SHOW_PROFILE_COLORS
 
     initialized = true;
     LOG_INF("Finished initializing LED widget");

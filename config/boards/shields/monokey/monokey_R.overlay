@@ -9,6 +9,15 @@
 
 &xiao_serial { status = "disabled"; };
 
+/* Disable the xiao_ble board's default console CDC ACM so USB exposes only the
+ * Studio RPC serial. boards/common/usb/cdc_acm_serial.dtsi (pulled in by
+ * seeed/xiao_ble) creates board_cdc_acm_uart, which with the studio-rpc-usb-uart
+ * snippet's CDC ACM made TWO "conductor" usbmodem ports (only the RPC one works).
+ * Must pair with CONFIG_BOARD_SERIAL_BACKEND_CDC_ACM=n in monokey_R.conf: that
+ * turns off the console backend so uart_console.c does not reference this now
+ * disabled node (otherwise the non-logging build fails to link). */
+&board_cdc_acm_uart { status = "disabled"; };
+
 &kscan0 {
         col-gpios
             = <&xiao_d 10 GPIO_ACTIVE_HIGH>

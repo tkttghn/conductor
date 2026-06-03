@@ -22,6 +22,7 @@
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
 #include <zmk/split/layer_state.h>
 #include <zmk/events/split_layer_state_changed.h>
+#include <zmk/events/split_layer_color_changed.h>
 #endif
 
 #include <zephyr/logging/log.h>
@@ -68,7 +69,7 @@ static const uint8_t rgb_idx[] = {DT_NODE_CHILD_IDX(DT_ALIAS(led_red)),
 static const char *color_names[] = {"black", "red",     "green", "yellow",
                                     "blue",  "magenta", "cyan",  "white"};
 
-#if SHOW_LAYER_COLORS || SHOW_PERIPHERAL_LAYER_COLORS
+#if SHOW_LAYER_COLORS || SHOW_PERIPHERAL_LAYER_COLORS || IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
 static uint8_t layer_color_idx[] = {
     CONFIG_RGBLED_WIDGET_LAYER_0_COLOR,  CONFIG_RGBLED_WIDGET_LAYER_1_COLOR,
     CONFIG_RGBLED_WIDGET_LAYER_2_COLOR,  CONFIG_RGBLED_WIDGET_LAYER_3_COLOR,
@@ -383,7 +384,11 @@ static int led_layer_color_listener_cb(const zmk_event_t *eh) {
 ZMK_LISTENER(led_layer_color_listener, led_layer_color_listener_cb);
 ZMK_SUBSCRIPTION(led_layer_color_listener, zmk_layer_state_changed);
 ZMK_SUBSCRIPTION(led_layer_color_listener, zmk_activity_state_changed);
+#endif // SHOW_LAYER_COLORS
 
+// The color table + RPC + settings exist on both roles: R/central owns it (Studio
+// edits + authoritative storage), L/peripheral persists values synced over split.
+#if SHOW_LAYER_COLORS || IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
 #define RGBLED_LAYER_COLOR_SETTINGS_KEY "rgbled/l_c"
 
 uint8_t zmk_rgbled_widget_get_layer_color(uint8_t layer_id) {
@@ -400,8 +405,14 @@ void zmk_rgbled_widget_set_layer_color(uint8_t layer_id, uint8_t color_idx) {
     }
     layer_color_idx[layer_id] = color_idx;
     LOG_INF("Layer %d color set to %s via RPC", layer_id, color_names[color_idx]);
+#if SHOW_LAYER_COLORS
     update_layer_color();
+#endif
     settings_save_one(RGBLED_LAYER_COLOR_SETTINGS_KEY, layer_color_idx, sizeof(layer_color_idx));
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE) && IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    // R/central holds the authoritative table; push the change to the L peripheral.
+    zmk_split_central_update_layer_color(layer_id, color_idx);
+#endif
 }
 
 static int rgbled_settings_set(const char *key, size_t len, settings_read_cb read_cb, void *cb_arg) {
@@ -428,7 +439,7 @@ static int rgbled_settings_init(void) {
 }
 
 SYS_INIT(rgbled_settings_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
-#endif // SHOW_LAYER_COLORS
+#endif // SHOW_LAYER_COLORS || PERIPHERAL_LAYER_STATE
 
 #if SHOW_PROFILE_COLORS
 static uint8_t profile_color_idx[] = {
@@ -512,6 +523,25 @@ static int peripheral_layer_listener_cb(const zmk_event_t *eh) {
 
 ZMK_LISTENER(peripheral_layer_listener, peripheral_layer_listener_cb);
 ZMK_SUBSCRIPTION(peripheral_layer_listener, zmk_split_layer_state_changed);
+
+// Receive Studio color-table edits synced from the central, persist them, and
+// refresh the LED if the affected layer is the one currently shown.
+static int peripheral_layer_color_listener_cb(const zmk_event_t *eh) {
+    struct zmk_split_layer_color_changed *ev = as_zmk_split_layer_color_changed(eh);
+    if (ev != NULL && ev->layer_id < ARRAY_SIZE(layer_color_idx) && ev->color_idx <= 7) {
+        layer_color_idx[ev->layer_id] = ev->color_idx;
+        settings_save_one(RGBLED_LAYER_COLOR_SETTINGS_KEY, layer_color_idx, sizeof(layer_color_idx));
+        if (initialized) {
+            uint8_t cur = 0;
+            zmk_split_peripheral_get_layer(&cur);
+            update_peripheral_layer_color(cur);
+        }
+    }
+    return 0;
+}
+
+ZMK_LISTENER(peripheral_layer_color_listener, peripheral_layer_color_listener_cb);
+ZMK_SUBSCRIPTION(peripheral_layer_color_listener, zmk_split_layer_color_changed);
 #endif // SHOW_PERIPHERAL_LAYER_COLORS
 
 #if !IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)

@@ -77,19 +77,19 @@
         /* ベース: オートマウスレイヤー (AML)
          * トラックボール操作時にレイヤー4 (MOUSE) を自動有効化
          * 60000ms (60秒) のタイムアウトで自動解除 */
-        input-processors = <&zip_temp_layer 4 60000>;
+        input-processors = <&zip_temp_layer 4 60000 &zip_xy_scaler 1 2>;
 
         /* スクロールレイヤー: レイヤー5 (SCROLL) がアクティブ時
          * XY移動をスクロールホイールに変換
          * スクロール速度をスケーリング (1/8) で調整 */
         scroll_layer {
             layers = <5>;
-            input-processors = <&zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
+            input-processors = <&zip_xy_scaler 1 2 &zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
         };
 
         gesture_layer {
             layers = <13>;
-            input-processors = <&trackball_gestures>;
+            input-processors = <&zip_xy_scaler 1 2 &trackball_gestures>;
         };
 
         /* 精密モード: レイヤー12 (PRECISION) がアクティブ時、
@@ -98,7 +98,7 @@
          * トグルキー（&tog 12）で ON/OFF。 */
         precision_layer {
             layers = <12>;
-            input-processors = <&studio_pointer_scaler>;
+            input-processors = <&zip_xy_scaler 1 2 &studio_pointer_scaler>;
         };
     };
 
@@ -143,7 +143,7 @@
         reg = <0>;
         spi-max-frequency = <2000000>;
         irq-gpios = <&gpio0 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-        cpi = <800>;
+        cpi = <1600>;
         force-awake;
         evt-type = <INPUT_EV_REL>;
         x-input-code = <INPUT_REL_X>;

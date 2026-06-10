@@ -29,17 +29,37 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 static struct {
     uint32_t magic;
     uint32_t reason;
+    uint32_t pc;
+    uint32_t lr;
 } fatal_mark __noinit;
 
 void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf) {
-    ARG_UNUSED(esf);
     fatal_mark.magic = FATAL_MARK_MAGIC;
     fatal_mark.reason = reason;
+    fatal_mark.pc = esf ? esf->basic.pc : 0;
+    fatal_mark.lr = esf ? esf->basic.lr : 0;
     LOG_PANIC();
-    LOG_ERR("Fatal error %u -> immediate reboot", reason);
+    LOG_ERR("Fatal error %u (pc=0x%08x lr=0x%08x) -> immediate reboot", reason, fatal_mark.pc,
+            fatal_mark.lr);
     sys_reboot(SYS_REBOOT_COLD);
     CODE_UNREACHABLE;
 }
+
+/* Last boot's diagnosis, re-logged every 60s so the fatal details can be
+ * read over USB logging at any time after the reboot, not just at boot. */
+static uint32_t last_cause;
+static bool last_fatal;
+static uint32_t last_reason;
+static uint32_t last_pc;
+static uint32_t last_lr;
+
+static void diag_report_cb(struct k_work *work) {
+    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x", last_cause,
+            (int)last_fatal, last_reason, last_pc, last_lr);
+    k_work_schedule(k_work_delayable_from_work(work), K_SECONDS(60));
+}
+
+static K_WORK_DELAYABLE_DEFINE(diag_report_work, diag_report_cb);
 
 uint8_t reset_diag_boot_color(void) {
     uint32_t cause = 0;
@@ -48,13 +68,21 @@ uint8_t reset_diag_boot_color(void) {
         hwinfo_clear_reset_cause();
     }
 
-    bool fatal = fatal_mark.magic == FATAL_MARK_MAGIC;
-    uint32_t fatal_reason = fatal ? fatal_mark.reason : 0;
+    last_cause = cause;
+    last_fatal = fatal_mark.magic == FATAL_MARK_MAGIC;
+    last_reason = last_fatal ? fatal_mark.reason : 0;
+    last_pc = last_fatal ? fatal_mark.pc : 0;
+    last_lr = last_fatal ? fatal_mark.lr : 0;
     fatal_mark.magic = 0;
 
-    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u", cause, (int)fatal, fatal_reason);
+    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x", last_cause,
+            (int)last_fatal, last_reason, last_pc, last_lr);
 
-    if (fatal) {
+    if (last_fatal || (cause & (RESET_WATCHDOG | RESET_CPU_LOCKUP))) {
+        k_work_schedule(&diag_report_work, K_SECONDS(60));
+    }
+
+    if (last_fatal) {
         return 3; /* red+green = yellow */
     }
     if (cause & RESET_WATCHDOG) {

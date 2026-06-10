@@ -15,6 +15,8 @@
  * RAM (survives a warm reset) and reboot right away instead.
  */
 
+#include <string.h>
+
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/hwinfo.h>
 #include <zephyr/fatal.h>
@@ -30,6 +32,7 @@ static struct {
     uint32_t reason;
     uint32_t pc;
     uint32_t lr;
+    char thread[16];
 } fatal_mark __noinit;
 
 void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf) {
@@ -37,6 +40,18 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf) 
     fatal_mark.reason = reason;
     fatal_mark.pc = esf ? esf->basic.pc : 0;
     fatal_mark.lr = esf ? esf->basic.lr : 0;
+    /* Which thread died? Decisive for stack overflows, where the esf is
+     * garbage. Needs CONFIG_THREAD_NAME (k_thread_name_get returns NULL
+     * otherwise, which is fine). */
+    fatal_mark.thread[0] = '\0';
+    struct k_thread *th = k_sched_current_thread_query();
+    if (th) {
+        const char *name = k_thread_name_get(th);
+        if (name) {
+            strncpy(fatal_mark.thread, name, sizeof(fatal_mark.thread) - 1);
+            fatal_mark.thread[sizeof(fatal_mark.thread) - 1] = '\0';
+        }
+    }
     /* No LOG_PANIC() here: flushing to the USB CDC log backend spins forever
      * when no host is draining the port, and the watchdog fires before
      * sys_reboot() runs (seen live: fatal mark set but RESETREAS showed DOG,
@@ -52,10 +67,11 @@ static bool last_fatal;
 static uint32_t last_reason;
 static uint32_t last_pc;
 static uint32_t last_lr;
+static char last_thread[16];
 
 static void diag_report_cb(struct k_work *work) {
-    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x", last_cause,
-            (int)last_fatal, last_reason, last_pc, last_lr);
+    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x thread=%s",
+            last_cause, (int)last_fatal, last_reason, last_pc, last_lr, last_thread);
     k_work_schedule(k_work_delayable_from_work(work), K_SECONDS(60));
 }
 
@@ -73,10 +89,15 @@ uint8_t reset_diag_boot_color(void) {
     last_reason = last_fatal ? fatal_mark.reason : 0;
     last_pc = last_fatal ? fatal_mark.pc : 0;
     last_lr = last_fatal ? fatal_mark.lr : 0;
+    last_thread[0] = '\0';
+    if (last_fatal) {
+        memcpy(last_thread, fatal_mark.thread, sizeof(last_thread));
+        last_thread[sizeof(last_thread) - 1] = '\0';
+    }
     fatal_mark.magic = 0;
 
-    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x", last_cause,
-            (int)last_fatal, last_reason, last_pc, last_lr);
+    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x thread=%s",
+            last_cause, (int)last_fatal, last_reason, last_pc, last_lr, last_thread);
 
     if (last_fatal || (cause & (RESET_WATCHDOG | RESET_CPU_LOCKUP))) {
         k_work_schedule(&diag_report_work, K_SECONDS(60));

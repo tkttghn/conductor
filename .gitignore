@@ -1,0 +1,9 @@
+# Local west workspace (probe builds only — release artifacts come from CI)
+/.venv/
+/.west/
+/zephyr/
+/zmk/
+/modules/
+/tools/
+/bootloader/
+/build/

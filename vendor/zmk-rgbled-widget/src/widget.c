@@ -42,6 +42,10 @@
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
+#if IS_ENABLED(CONFIG_RGBLED_WIDGET_RESET_DIAG)
+uint8_t reset_diag_boot_color(void); // src/reset_diag.c
+#endif
+
 #define LED_GPIO_NODE_ID DT_COMPAT_GET_ANY_STATUS_OKAY(gpio_leds)
 
 BUILD_ASSERT(DT_NODE_EXISTS(DT_ALIAS(led_red)),
@@ -680,6 +684,18 @@ extern void led_init_thread(void *d0, void *d1, void *d2) {
     ARG_UNUSED(d0);
     ARG_UNUSED(d1);
     ARG_UNUSED(d2);
+
+#if IS_ENABLED(CONFIG_RGBLED_WIDGET_RESET_DIAG)
+    // blink why the previous boot ended (multi-host reboot investigation)
+    uint8_t reset_color = reset_diag_boot_color();
+    if (reset_color != 0) {
+        struct blink_item blink = {.color = reset_color, .duration_ms = 400};
+        for (int i = 0; i < 3; i++) {
+            k_msgq_put(&led_msgq, &blink, K_NO_WAIT);
+        }
+        k_sleep(K_MSEC(3 * (400 + CONFIG_RGBLED_WIDGET_INTERVAL_MS)));
+    }
+#endif
 
 #if IS_ENABLED(CONFIG_ZMK_BATTERY_REPORTING)
     // check and indicate battery level on thread start

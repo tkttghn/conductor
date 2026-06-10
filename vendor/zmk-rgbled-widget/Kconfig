@@ -12,6 +12,16 @@ config RGBLED_WIDGET_INTERVAL_MS
     int "Minimum wait duration between two blinks in ms"
     default 500
 
+config RGBLED_WIDGET_RESET_DIAG
+    bool "Blink previous reset cause on boot (diagnostics)"
+    help
+      On boot, blink 3x with the cause of the previous reboot:
+      yellow = fatal error (assert/oops/fault), red = hardware watchdog
+      without a fatal error (feed starved), magenta = CPU lockup,
+      cyan = other soft reset (incl. leaving the UF2 bootloader).
+      No blink on normal power-on/reset-pin boots. Fatal errors also
+      reboot immediately instead of halting until the watchdog fires.
+
 # Battery level settings
 
 choice RGBLED_WIDGET_BATTERY_SHOW

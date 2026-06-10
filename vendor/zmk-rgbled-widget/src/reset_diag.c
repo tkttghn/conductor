@@ -20,7 +20,6 @@
 #include <zephyr/fatal.h>
 #include <zephyr/sys/reboot.h>
 #include <zephyr/logging/log.h>
-#include <zephyr/logging/log_ctrl.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -38,9 +37,10 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf) 
     fatal_mark.reason = reason;
     fatal_mark.pc = esf ? esf->basic.pc : 0;
     fatal_mark.lr = esf ? esf->basic.lr : 0;
-    LOG_PANIC();
-    LOG_ERR("Fatal error %u (pc=0x%08x lr=0x%08x) -> immediate reboot", reason, fatal_mark.pc,
-            fatal_mark.lr);
+    /* No LOG_PANIC() here: flushing to the USB CDC log backend spins forever
+     * when no host is draining the port, and the watchdog fires before
+     * sys_reboot() runs (seen live: fatal mark set but RESETREAS showed DOG,
+     * not SREQ). The __noinit mark carries everything; reboot immediately. */
     sys_reboot(SYS_REBOOT_COLD);
     CODE_UNREACHABLE;
 }

@@ -4,6 +4,8 @@
 /zephyr/
 /zmk/
 /modules/
+/optional/
+/zmk-pmw3610-driver/
 /tools/
 /bootloader/
 /build/

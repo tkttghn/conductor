@@ -22,6 +22,7 @@
 #include <zephyr/fatal.h>
 #include <zephyr/sys/reboot.h>
 #include <zephyr/logging/log.h>
+#include <cmsis_core.h>
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
@@ -33,6 +34,13 @@ static struct {
     uint32_t pc;
     uint32_t lr;
     char thread[16];
+    /* ARM fault details: which address was touched (MMFAR/BFAR) tells WHOSE
+     * stack guard was hit — the _current thread may just be the victim of an
+     * ISR/foreign stack overflow, not the owner of the overflowed stack. */
+    uint32_t cfsr;
+    uint32_t mmfar;
+    uint32_t bfar;
+    int32_t stack_unused;
 } fatal_mark __noinit;
 
 void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf) {
@@ -40,10 +48,14 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf) 
     fatal_mark.reason = reason;
     fatal_mark.pc = esf ? esf->basic.pc : 0;
     fatal_mark.lr = esf ? esf->basic.lr : 0;
+    fatal_mark.cfsr = SCB->CFSR;
+    fatal_mark.mmfar = SCB->MMFAR;
+    fatal_mark.bfar = SCB->BFAR;
     /* Which thread died? Decisive for stack overflows, where the esf is
      * garbage. Needs CONFIG_THREAD_NAME (k_thread_name_get returns NULL
      * otherwise, which is fine). */
     fatal_mark.thread[0] = '\0';
+    fatal_mark.stack_unused = -1;
     struct k_thread *th = k_sched_current_thread_query();
     if (th) {
         const char *name = k_thread_name_get(th);
@@ -51,6 +63,15 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf) 
             strncpy(fatal_mark.thread, name, sizeof(fatal_mark.thread) - 1);
             fatal_mark.thread[sizeof(fatal_mark.thread) - 1] = '\0';
         }
+        /* Unused headroom of the current thread's stack (CONFIG_INIT_STACKS):
+         * ~0 => this thread's own stack really overflowed; large => the fault
+         * came from somewhere else (ISR stack, wild pointer). */
+#if IS_ENABLED(CONFIG_INIT_STACKS) && IS_ENABLED(CONFIG_THREAD_STACK_INFO)
+        size_t unused = 0;
+        if (k_thread_stack_space_get(th, &unused) == 0) {
+            fatal_mark.stack_unused = (int32_t)unused;
+        }
+#endif
     }
     /* No LOG_PANIC() here: flushing to the USB CDC log backend spins forever
      * when no host is draining the port, and the watchdog fires before
@@ -68,10 +89,16 @@ static uint32_t last_reason;
 static uint32_t last_pc;
 static uint32_t last_lr;
 static char last_thread[16];
+static uint32_t last_cfsr;
+static uint32_t last_mmfar;
+static uint32_t last_bfar;
+static int32_t last_stack_unused;
 
 static void diag_report_cb(struct k_work *work) {
-    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x thread=%s",
-            last_cause, (int)last_fatal, last_reason, last_pc, last_lr, last_thread);
+    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x thread=%s "
+            "cfsr=0x%08x mmfar=0x%08x bfar=0x%08x unused=%d",
+            last_cause, (int)last_fatal, last_reason, last_pc, last_lr, last_thread, last_cfsr,
+            last_mmfar, last_bfar, last_stack_unused);
     k_work_schedule(k_work_delayable_from_work(work), K_SECONDS(60));
 }
 
@@ -90,14 +117,20 @@ uint8_t reset_diag_boot_color(void) {
     last_pc = last_fatal ? fatal_mark.pc : 0;
     last_lr = last_fatal ? fatal_mark.lr : 0;
     last_thread[0] = '\0';
+    last_cfsr = last_fatal ? fatal_mark.cfsr : 0;
+    last_mmfar = last_fatal ? fatal_mark.mmfar : 0;
+    last_bfar = last_fatal ? fatal_mark.bfar : 0;
+    last_stack_unused = last_fatal ? fatal_mark.stack_unused : -1;
     if (last_fatal) {
         memcpy(last_thread, fatal_mark.thread, sizeof(last_thread));
         last_thread[sizeof(last_thread) - 1] = '\0';
     }
     fatal_mark.magic = 0;
 
-    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x thread=%s",
-            last_cause, (int)last_fatal, last_reason, last_pc, last_lr, last_thread);
+    LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x thread=%s "
+            "cfsr=0x%08x mmfar=0x%08x bfar=0x%08x unused=%d",
+            last_cause, (int)last_fatal, last_reason, last_pc, last_lr, last_thread, last_cfsr,
+            last_mmfar, last_bfar, last_stack_unused);
 
     if (last_fatal || (cause & (RESET_WATCHDOG | RESET_CPU_LOCKUP))) {
         k_work_schedule(&diag_report_work, K_SECONDS(60));

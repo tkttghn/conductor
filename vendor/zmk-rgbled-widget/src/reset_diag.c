@@ -28,6 +28,41 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #define FATAL_MARK_MAGIC 0xFA7A1E55
 
+/* Prepare-pipeline snapshot written by the zephyr diag fork (lll.c) right
+ * before the controller asserts on a full pipeline. The weak zero instance
+ * keeps the link intact on builds without that fork patch. Layout must
+ * match lll.c's definition. */
+#define LLL_DIAG_PIPELINE_MAGIC   0x11D1A65C
+#define LLL_DIAG_PIPELINE_ENT_MAX 16
+
+struct lll_diag_pipeline_ent {
+    uint32_t prepare_cb;
+    uint32_t param;
+    uint8_t is_resume;
+    uint8_t is_aborted;
+};
+
+struct lll_diag_pipeline_snap {
+    uint32_t magic;
+    uint32_t count;
+    struct lll_diag_pipeline_ent ent[LLL_DIAG_PIPELINE_ENT_MAX];
+};
+
+__weak struct lll_diag_pipeline_snap lll_diag_pipeline_snap;
+
+static struct lll_diag_pipeline_snap last_pipeline;
+
+static void diag_log_pipeline(void) {
+    if (last_pipeline.magic != LLL_DIAG_PIPELINE_MAGIC) {
+        return;
+    }
+    for (uint32_t i = 0; i < last_pipeline.count && i < LLL_DIAG_PIPELINE_ENT_MAX; i++) {
+        LOG_WRN("pipeline[%02u]: cb=0x%08x param=0x%08x resume=%u aborted=%u", i,
+                last_pipeline.ent[i].prepare_cb, last_pipeline.ent[i].param,
+                last_pipeline.ent[i].is_resume, last_pipeline.ent[i].is_aborted);
+    }
+}
+
 static struct {
     uint32_t magic;
     uint32_t reason;
@@ -99,6 +134,7 @@ static void diag_report_cb(struct k_work *work) {
             "cfsr=0x%08x mmfar=0x%08x bfar=0x%08x unused=%d",
             last_cause, (int)last_fatal, last_reason, last_pc, last_lr, last_thread, last_cfsr,
             last_mmfar, last_bfar, last_stack_unused);
+    diag_log_pipeline();
     k_work_schedule(k_work_delayable_from_work(work), K_SECONDS(60));
 }
 
@@ -127,10 +163,16 @@ uint8_t reset_diag_boot_color(void) {
     }
     fatal_mark.magic = 0;
 
+    if (lll_diag_pipeline_snap.magic == LLL_DIAG_PIPELINE_MAGIC) {
+        memcpy(&last_pipeline, &lll_diag_pipeline_snap, sizeof(last_pipeline));
+        lll_diag_pipeline_snap.magic = 0;
+    }
+
     LOG_WRN("reset diag: cause=0x%08x fatal=%d reason=%u pc=0x%08x lr=0x%08x thread=%s "
             "cfsr=0x%08x mmfar=0x%08x bfar=0x%08x unused=%d",
             last_cause, (int)last_fatal, last_reason, last_pc, last_lr, last_thread, last_cfsr,
             last_mmfar, last_bfar, last_stack_unused);
+    diag_log_pipeline();
 
     if (last_fatal || (cause & (RESET_WATCHDOG | RESET_CPU_LOCKUP))) {
         k_work_schedule(&diag_report_work, K_SECONDS(60));

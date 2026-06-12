@@ -45,6 +45,9 @@ struct lll_diag_pipeline_ent {
 struct lll_diag_pipeline_snap {
     uint32_t magic;
     uint32_t count;
+    uint32_t curr_param;
+    uint32_t curr_is_abort_cb;
+    uint32_t curr_abort_cb;
     struct lll_diag_pipeline_ent ent[LLL_DIAG_PIPELINE_ENT_MAX];
 };
 
@@ -56,6 +59,9 @@ static void diag_log_pipeline(void) {
     if (last_pipeline.magic != LLL_DIAG_PIPELINE_MAGIC) {
         return;
     }
+    LOG_WRN("pipeline curr: param=0x%08x is_abort_cb=0x%08x abort_cb=0x%08x",
+            last_pipeline.curr_param, last_pipeline.curr_is_abort_cb,
+            last_pipeline.curr_abort_cb);
     for (uint32_t i = 0; i < last_pipeline.count && i < LLL_DIAG_PIPELINE_ENT_MAX; i++) {
         LOG_WRN("pipeline[%02u]: cb=0x%08x param=0x%08x resume=%u aborted=%u", i,
                 last_pipeline.ent[i].prepare_cb, last_pipeline.ent[i].param,

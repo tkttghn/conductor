@@ -88,7 +88,13 @@
          * スクロール速度をスケーリング (1/8) で調整 */
         scroll_layer {
             layers = <5>;
-            input-processors = <&zip_xy_scaler 1 2 &zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
+            // SMOOTH_SCROLLING: emit high-resolution wheel units. The host's
+            // Resolution Multiplier divides them back to whole notches, so the
+            // 1/16 down-scale that was here is removed (otherwise the value is
+            // already tiny and the host divides it again -> "tiny scroll on
+            // Windows"). apply_resolution_scaling (input_listener.c) does the
+            // per-host /div. Net scroll amount ~unchanged; tune here if needed.
+            input-processors = <&zip_xy_scaler 1 2 &zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
         };
 
         gesture_layer {

@@ -94,7 +94,7 @@
             // already tiny and the host divides it again -> "tiny scroll on
             // Windows"). apply_resolution_scaling (input_listener.c) does the
             // per-host /div. Net scroll amount ~unchanged; tune here if needed.
-            input-processors = <&zip_xy_scaler 1 2 &zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
+            input-processors = <&zip_xy_scaler 1 2 &zip_xy_to_scroll_mapper &zip_scroll_axis_lock &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
         };
 
         gesture_layer {

@@ -114,11 +114,16 @@
         };
 
         mouse_layer {
+            /* Non-MB keys are &trans (not &none) so modifiers/keys resolve to
+             * the base layer while AML is active — needed for Shift+click and
+             * any base-layer key used mid-pointer. Position-independent: works
+             * wherever Shift is mapped. Pairs with the temp-layer modifier
+             * guard (zmk fork) that keeps AML active while a modifier is held. */
             bindings = <
-&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none    &none  &none  &mkp MB1  &mkp MB2  &mkp MB3
-&none  &none  &none  &none  &none    &none  &none  &none  &none  &none
-&none  &none  &none  &none  &none  &none    &none  &none  &none  &none
+&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans    &trans  &trans  &mkp MB1  &mkp MB2  &mkp MB3
+&trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans  &trans
+&trans  &trans  &trans  &trans  &trans  &trans    &trans  &trans  &trans  &trans
             >;
         };
 

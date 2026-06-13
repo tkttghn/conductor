@@ -36,9 +36,13 @@
 // 非マウスキーでAML解除
 &zip_temp_layer {
     excluded-positions = <
-        17 // K
-        18 // L
+        17 // K (MB1)
+        18 // L (MB2)
     >;
+    // MB-only. Shift/Ctrl/etc. are handled position-independently by the
+    // temp-layer's deferred modifier check (zmk fork feature/aml-modifier-guard):
+    // a held modifier keeps AML alive regardless of where it is mapped or of
+    // persisted excluded-positions, so no Shift positions are needed here.
     require-prior-idle-ms = <300>;
     // タイピング後300ms経過でAMLが発動可能（100msだとsplit BLE通信ラグが顕著、750msだと反応鈍い）
     require-prior-motion = <50>;

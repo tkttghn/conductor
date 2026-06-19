@@ -42,7 +42,7 @@ manifest:
           - trusted-firmware-m
     - name: zmk-studio-messages
       remote: pite1222
-      revision: release/conductor-0.5.1
+      revision: release/conductor-0.6.0
       path: modules/msgs/zmk-studio-messages
     - name: zmk-pmw3610-driver
       remote: badjeff

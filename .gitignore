@@ -1,13 +1,14 @@
-# Local west workspace dependencies
-.west/
-modules/
-optional/
-zephyr/
-zmk/
-zmk-pmw3610-driver/
-
-# Local build outputs
-build/
+# Local west workspace (probe builds only — release artifacts come from CI)
+/.venv/
+/.west/
+/zephyr/
+/zmk/
+/modules/
+/optional/
+/zmk-pmw3610-driver/
+/tools/
+/bootloader/
+/build/
 
 # macOS metadata
 .DS_Store

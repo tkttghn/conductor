@@ -11,11 +11,38 @@ manifest:
   projects:
     - name: zmk
       remote: pite1222
-      revision: release/conductor-0.5.0
+      revision: release/conductor-0.6.2
       import: app/west.yml
+    # Override the zephyr pinned by zmk's manifest: same base
+    # (zmkfirmware v4.1.0+zmk-fixes) plus the BLE controller prepare
+    # pipeline fix for the multi-host LL_ASSERT reboot (lll.c:894).
+    # Import settings mirror zmk/app/west.yml's zephyr entry.
+    - name: zephyr
+      remote: pite1222
+      revision: release/conductor-0.6.0
+      clone-depth: 1
+      import:
+        name-blocklist:
+          - ci-tools
+          - hal_altera
+          - hal_cypress
+          - hal_infineon
+          - hal_microchip
+          - hal_nxp
+          - hal_openisa
+          - hal_xtensa
+          - hal_st
+          - hal_ti
+          - loramac-node
+          - mcuboot
+          - mcumgr
+          - net-tools
+          - openthread
+          - edtt
+          - trusted-firmware-m
     - name: zmk-studio-messages
       remote: pite1222
-      revision: feat/pointing
+      revision: release/conductor-0.6.0
       path: modules/msgs/zmk-studio-messages
     - name: zmk-pmw3610-driver
       remote: badjeff

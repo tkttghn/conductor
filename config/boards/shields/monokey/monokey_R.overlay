@@ -9,6 +9,15 @@
 
 &xiao_serial { status = "disabled"; };
 
+/* Disable the xiao_ble board's default console CDC ACM so USB exposes only the
+ * Studio RPC serial. boards/common/usb/cdc_acm_serial.dtsi (pulled in by
+ * seeed/xiao_ble) creates board_cdc_acm_uart, which with the studio-rpc-usb-uart
+ * snippet's CDC ACM made TWO "conductor" usbmodem ports (only the RPC one works).
+ * Must pair with CONFIG_BOARD_SERIAL_BACKEND_CDC_ACM=n in monokey_R.conf: that
+ * turns off the console backend so uart_console.c does not reference this now
+ * disabled node (otherwise the non-logging build fails to link). */
+&board_cdc_acm_uart { status = "disabled"; };
+
 &kscan0 {
         col-gpios
             = <&xiao_d 10 GPIO_ACTIVE_HIGH>
@@ -28,9 +37,13 @@
 // 非マウスキーでAML解除
 &zip_temp_layer {
     excluded-positions = <
-        17 // K
-        18 // L
+        17 // K (MB1)
+        18 // L (MB2)
     >;
+    // MB-only. Shift/Ctrl/etc. are handled position-independently by the
+    // temp-layer's deferred modifier check (zmk fork feature/aml-modifier-guard):
+    // a held modifier keeps AML alive regardless of where it is mapped or of
+    // persisted excluded-positions, so no Shift positions are needed here.
     require-prior-idle-ms = <300>;
     // タイピング後300ms経過でAMLが発動可能（100msだとsplit BLE通信ラグが顕著、750msだと反応鈍い）
     require-prior-motion = <50>;
@@ -82,12 +95,18 @@
         /* takitate追記：レイヤー6を追加 */
         scroll_layer {
             layers = <5 6>;
-            input-processors = <&zip_xy_to_scroll_mapper &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 16 &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
+            // SMOOTH_SCROLLING: emit high-resolution wheel units. The host's
+            // Resolution Multiplier divides them back to whole notches, so the
+            // 1/16 down-scale that was here is removed (otherwise the value is
+            // already tiny and the host divides it again -> "tiny scroll on
+            // Windows"). apply_resolution_scaling (input_listener.c) does the
+            // per-host /div. Net scroll amount ~unchanged; tune here if needed.
+            input-processors = <&zip_xy_scaler 1 2 &zip_xy_to_scroll_mapper &zip_scroll_axis_lock &zip_scroll_transform INPUT_TRANSFORM_Y_INVERT &zip_scroll_scaler 1 2 &studio_scroll_scaler &hwheel_scaler 1 2>;
         };
 
         gesture_layer {
             layers = <13>;
-            input-processors = <&trackball_gestures>;
+            input-processors = <&zip_xy_scaler 1 2 &trackball_gestures>;
         };
 
         /* 精密モード: レイヤー12 (PRECISION) がアクティブ時、
@@ -96,7 +115,7 @@
          * トグルキー（&tog 12）で ON/OFF。 */
         precision_layer {
             layers = <12>;
-            input-processors = <&studio_pointer_scaler>;
+            input-processors = <&zip_xy_scaler 1 2 &studio_pointer_scaler>;
         };
     };
 
@@ -141,7 +160,7 @@
         reg = <0>;
         spi-max-frequency = <2000000>;
         irq-gpios = <&gpio0 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-        cpi = <1200>;
+        cpi = <1600>;
         force-awake;
         evt-type = <INPUT_EV_REL>;
         x-input-code = <INPUT_REL_X>;

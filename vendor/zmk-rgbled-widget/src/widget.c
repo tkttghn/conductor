@@ -19,6 +19,12 @@
 
 #include <zmk/split/central.h>
 
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
+#include <zmk/split/layer_state.h>
+#include <zmk/events/split_layer_state_changed.h>
+#include <zmk/events/split_layer_color_changed.h>
+#endif
+
 #include <zephyr/logging/log.h>
 
 #include <zmk_rgbled_widget/widget.h>
@@ -36,6 +42,10 @@
 
 LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
+#if IS_ENABLED(CONFIG_RGBLED_WIDGET_RESET_DIAG)
+uint8_t reset_diag_boot_color(void); // src/reset_diag.c
+#endif
+
 #define LED_GPIO_NODE_ID DT_COMPAT_GET_ANY_STATUS_OKAY(gpio_leds)
 
 BUILD_ASSERT(DT_NODE_EXISTS(DT_ALIAS(led_red)),
@@ -49,6 +59,10 @@ BUILD_ASSERT(!(SHOW_LAYER_CHANGE && SHOW_LAYER_COLORS),
              "CONFIG_RGBLED_WIDGET_SHOW_LAYER_CHANGE and CONFIG_RGBLED_WIDGET_SHOW_LAYER_COLORS "
              "are mutually exclusive");
 
+BUILD_ASSERT(!(SHOW_LAYER_COLORS && SHOW_PROFILE_COLORS),
+             "CONFIG_RGBLED_WIDGET_SHOW_LAYER_COLORS and CONFIG_RGBLED_WIDGET_SHOW_PROFILE_COLORS "
+             "are mutually exclusive");
+
 // GPIO-based LED device and indices of red/green/blue LEDs inside its DT node
 static const struct device *led_dev = DEVICE_DT_GET(LED_GPIO_NODE_ID);
 static const uint8_t rgb_idx[] = {DT_NODE_CHILD_IDX(DT_ALIAS(led_red)),
@@ -59,7 +73,7 @@ static const uint8_t rgb_idx[] = {DT_NODE_CHILD_IDX(DT_ALIAS(led_red)),
 static const char *color_names[] = {"black", "red",     "green", "yellow",
                                     "blue",  "magenta", "cyan",  "white"};
 
-#if SHOW_LAYER_COLORS
+#if SHOW_LAYER_COLORS || SHOW_PERIPHERAL_LAYER_COLORS || IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
 static uint8_t layer_color_idx[] = {
     CONFIG_RGBLED_WIDGET_LAYER_0_COLOR,  CONFIG_RGBLED_WIDGET_LAYER_1_COLOR,
     CONFIG_RGBLED_WIDGET_LAYER_2_COLOR,  CONFIG_RGBLED_WIDGET_LAYER_3_COLOR,
@@ -131,6 +145,10 @@ static void set_rgb_leds(uint8_t color, uint16_t duration_ms) {
 // separate thread
 K_MSGQ_DEFINE(led_msgq, sizeof(struct blink_item), 16, 1);
 
+#if SHOW_PROFILE_COLORS
+void update_profile_color(bool force);
+#endif
+
 static void indicate_connectivity_internal(void) {
     struct blink_item blink = {.duration_ms = CONFIG_RGBLED_WIDGET_CONN_BLINK_MS};
 
@@ -181,6 +199,9 @@ static void indicate_connectivity_internal(void) {
 static int led_output_listener_cb(const zmk_event_t *eh) {
     if (initialized) {
         indicate_connectivity();
+#if SHOW_PROFILE_COLORS
+        update_profile_color(false);
+#endif
     }
     return 0;
 }
@@ -294,14 +315,19 @@ static int led_battery_listener_cb(const zmk_event_t *eh) {
         k_msgq_put(&led_msgq, &steady, K_NO_WAIT);
     } else if (battery_level > CONFIG_RGBLED_WIDGET_BATTERY_LEVEL_CRITICAL &&
                critical_steady_active) {
-        // Battery recovered above critical: clear steady light
+        // Battery recovered above critical: clear steady light. Use a persistent
+        // item so the process thread drops critical_steady_active in the persistent
+        // branch; a non-persistent color=0 item is ignored while the flag is set.
         LOG_INF("Battery recovered above critical (%d%%), clearing steady light", battery_level);
         struct blink_item clear = {
             .color = 0,
             .duration_ms = 0,
-            .persistent = false,
+            .persistent = true,
         };
         k_msgq_put(&led_msgq, &clear, K_NO_WAIT);
+#if SHOW_PROFILE_COLORS
+        update_profile_color(true);
+#endif
     }
     return 0;
 }
@@ -362,7 +388,11 @@ static int led_layer_color_listener_cb(const zmk_event_t *eh) {
 ZMK_LISTENER(led_layer_color_listener, led_layer_color_listener_cb);
 ZMK_SUBSCRIPTION(led_layer_color_listener, zmk_layer_state_changed);
 ZMK_SUBSCRIPTION(led_layer_color_listener, zmk_activity_state_changed);
+#endif // SHOW_LAYER_COLORS
 
+// The color table + RPC + settings exist on both roles: R/central owns it (Studio
+// edits + authoritative storage), L/peripheral persists values synced over split.
+#if SHOW_LAYER_COLORS || IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
 #define RGBLED_LAYER_COLOR_SETTINGS_KEY "rgbled/l_c"
 
 uint8_t zmk_rgbled_widget_get_layer_color(uint8_t layer_id) {
@@ -379,8 +409,14 @@ void zmk_rgbled_widget_set_layer_color(uint8_t layer_id, uint8_t color_idx) {
     }
     layer_color_idx[layer_id] = color_idx;
     LOG_INF("Layer %d color set to %s via RPC", layer_id, color_names[color_idx]);
+#if SHOW_LAYER_COLORS
     update_layer_color();
+#endif
     settings_save_one(RGBLED_LAYER_COLOR_SETTINGS_KEY, layer_color_idx, sizeof(layer_color_idx));
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE) && IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    // R/central holds the authoritative table; push the change to the L peripheral.
+    zmk_split_central_update_layer_color(layer_id, color_idx);
+#endif
 }
 
 static int rgbled_settings_set(const char *key, size_t len, settings_read_cb read_cb, void *cb_arg) {
@@ -407,7 +443,110 @@ static int rgbled_settings_init(void) {
 }
 
 SYS_INIT(rgbled_settings_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
-#endif // SHOW_LAYER_COLORS
+#endif // SHOW_LAYER_COLORS || PERIPHERAL_LAYER_STATE
+
+#if SHOW_PROFILE_COLORS
+static uint8_t profile_color_idx[] = {
+    CONFIG_RGBLED_WIDGET_PROFILE_0_COLOR, CONFIG_RGBLED_WIDGET_PROFILE_1_COLOR,
+    CONFIG_RGBLED_WIDGET_PROFILE_2_COLOR, CONFIG_RGBLED_WIDGET_PROFILE_3_COLOR,
+    CONFIG_RGBLED_WIDGET_PROFILE_4_COLOR, CONFIG_RGBLED_WIDGET_PROFILE_5_COLOR,
+};
+
+// Profile connection-state blink: 0 = steady (connected); >0 = blink half-period
+// in ms (fast = unregistered/no bond, slow = paired but disconnected).
+static uint16_t profile_blink_period = 0;
+static bool profile_blink_on = true;
+
+void update_profile_color(bool force) {
+    // Do not override profile color while charging; charge_indicator owns the LED
+    if (IS_CHARGING()) {
+        LOG_DBG("Skipping profile color update while charging");
+        return;
+    }
+
+    uint8_t index = zmk_ble_active_profile_index();
+    // Clamp out-of-range profiles (e.g. if BT_MAX_PAIRED grows past the color
+    // table) to the last defined color so the LED never freezes on a stale one.
+    if (index >= ARRAY_SIZE(profile_color_idx)) {
+        index = ARRAY_SIZE(profile_color_idx) - 1;
+    }
+
+    // Connection state -> blink mode: unregistered (no bond) = fast blink,
+    // paired but disconnected = slow blink, connected = steady.
+    uint16_t period;
+    if (zmk_ble_active_profile_is_open()) {
+        period = CONFIG_RGBLED_WIDGET_PROFILE_BLINK_FAST_MS;
+    } else if (!zmk_ble_active_profile_is_connected()) {
+        period = CONFIG_RGBLED_WIDGET_PROFILE_BLINK_SLOW_MS;
+    } else {
+        period = 0;
+    }
+
+    if (force || led_layer_color != profile_color_idx[index] || profile_blink_period != period) {
+        led_layer_color = profile_color_idx[index];
+        profile_blink_period = period;
+        profile_blink_on = true;
+        struct blink_item color = {.color = led_layer_color};
+        LOG_INF("Profile %d color %s, blink period %dms", index, color_names[led_layer_color],
+                period);
+        k_msgq_put(&led_msgq, &color, K_NO_WAIT);
+    }
+}
+#endif // SHOW_PROFILE_COLORS
+
+#if SHOW_PERIPHERAL_LAYER_COLORS
+// Peripheral has no keymap; the central pushes the active layer index over the
+// split link. Map it to a color via the same layer_color_idx table.
+void update_peripheral_layer_color(uint8_t layer) {
+    // Do not override while charging; charge_indicator owns the LED
+    if (IS_CHARGING()) {
+        LOG_DBG("Skipping peripheral layer color update while charging");
+        return;
+    }
+
+    if (layer >= ARRAY_SIZE(layer_color_idx)) {
+        layer = ARRAY_SIZE(layer_color_idx) - 1;
+    }
+
+    if (led_layer_color != layer_color_idx[layer]) {
+        led_layer_color = layer_color_idx[layer];
+        struct blink_item color = {.color = led_layer_color};
+        LOG_INF("Setting peripheral layer color to %s for layer %d", color_names[led_layer_color],
+                layer);
+        k_msgq_put(&led_msgq, &color, K_NO_WAIT);
+    }
+}
+
+static int peripheral_layer_listener_cb(const zmk_event_t *eh) {
+    struct zmk_split_layer_state_changed *ev = as_zmk_split_layer_state_changed(eh);
+    if (ev != NULL && initialized) {
+        update_peripheral_layer_color(ev->layer);
+    }
+    return 0;
+}
+
+ZMK_LISTENER(peripheral_layer_listener, peripheral_layer_listener_cb);
+ZMK_SUBSCRIPTION(peripheral_layer_listener, zmk_split_layer_state_changed);
+
+// Receive Studio color-table edits synced from the central, persist them, and
+// refresh the LED if the affected layer is the one currently shown.
+static int peripheral_layer_color_listener_cb(const zmk_event_t *eh) {
+    struct zmk_split_layer_color_changed *ev = as_zmk_split_layer_color_changed(eh);
+    if (ev != NULL && ev->layer_id < ARRAY_SIZE(layer_color_idx) && ev->color_idx <= 7) {
+        layer_color_idx[ev->layer_id] = ev->color_idx;
+        settings_save_one(RGBLED_LAYER_COLOR_SETTINGS_KEY, layer_color_idx, sizeof(layer_color_idx));
+        if (initialized) {
+            uint8_t cur = 0;
+            zmk_split_peripheral_get_layer(&cur);
+            update_peripheral_layer_color(cur);
+        }
+    }
+    return 0;
+}
+
+ZMK_LISTENER(peripheral_layer_color_listener, peripheral_layer_color_listener_cb);
+ZMK_SUBSCRIPTION(peripheral_layer_color_listener, zmk_split_layer_color_changed);
+#endif // SHOW_PERIPHERAL_LAYER_COLORS
 
 #if SHOW_LAYER_CHANGE
 void indicate_layer(void) {
@@ -444,6 +583,23 @@ ZMK_LISTENER(led_layer_listener, led_layer_listener_cb);
 ZMK_SUBSCRIPTION(led_layer_listener, zmk_layer_state_changed);
 #endif // SHOW_LAYER_CHANGE
 
+#if SHOW_PROFILE_COLORS
+// charge_indicator owns the LED while charging or showing a low/critical battery
+// warning; the profile-state blink must not fight it.
+static inline bool charge_indicator_owns_led(void) {
+    if (IS_CHARGING()) {
+        return true;
+    }
+#if IS_ENABLED(CONFIG_CHARGE_INDICATOR) && IS_ENABLED(CONFIG_CHG_LOW_BATTERY_INDICATOR)
+    uint8_t soc = zmk_battery_state_of_charge();
+    if (soc > 0 && soc <= CONFIG_CHG_LOW_BATTERY_THRESHOLD) {
+        return true;
+    }
+#endif
+    return false;
+}
+#endif // SHOW_PROFILE_COLORS
+
 extern void led_process_thread(void *d0, void *d1, void *d2) {
     ARG_UNUSED(d0);
     ARG_UNUSED(d1);
@@ -458,14 +614,32 @@ extern void led_process_thread(void *d0, void *d1, void *d2) {
     while (true) {
         // wait until a blink item is received and process it
         struct blink_item blink;
+#if SHOW_PROFILE_COLORS
+        // Wake periodically while a profile-state blink is configured (even while
+        // charging) so we resume promptly once the charge indicator releases the LED.
+        k_timeout_t wait =
+            (profile_blink_period > 0 && !critical_steady_active) ? K_MSEC(profile_blink_period)
+                                                                  : K_FOREVER;
+        if (k_msgq_get(&led_msgq, &blink, wait) != 0) {
+            // Don't fight the charge indicator (charging or low/critical warning).
+            if (!charge_indicator_owns_led()) {
+                profile_blink_on = !profile_blink_on;
+                set_rgb_leds(profile_blink_on ? led_layer_color : 0, 0);
+            }
+            continue;
+        }
+#else
         k_msgq_get(&led_msgq, &blink, K_FOREVER);
+#endif
 
         if (blink.persistent) {
             // Persistent (steady) light: set color and keep it on indefinitely
             LOG_DBG("Got a persistent (steady) item from msgq, color %d", blink.color);
             critical_steady_active = (blink.color != 0);
             set_rgb_leds(blink.color, 0);
-            led_layer_color = 0; // override layer color while critical is active
+            if (critical_steady_active) {
+                led_layer_color = 0; // override base color only while critical is active
+            }
         } else if (blink.duration_ms > 0) {
             LOG_DBG("Got a blink item from msgq, color %d, duration %d", blink.color,
                     blink.duration_ms);
@@ -508,6 +682,18 @@ extern void led_init_thread(void *d0, void *d1, void *d2) {
     ARG_UNUSED(d1);
     ARG_UNUSED(d2);
 
+#if IS_ENABLED(CONFIG_RGBLED_WIDGET_RESET_DIAG)
+    // blink why the previous boot ended (multi-host reboot investigation)
+    uint8_t reset_color = reset_diag_boot_color();
+    if (reset_color != 0) {
+        struct blink_item blink = {.color = reset_color, .duration_ms = 400};
+        for (int i = 0; i < 3; i++) {
+            k_msgq_put(&led_msgq, &blink, K_NO_WAIT);
+        }
+        k_sleep(K_MSEC(3 * (400 + CONFIG_RGBLED_WIDGET_INTERVAL_MS)));
+    }
+#endif
+
 #if IS_ENABLED(CONFIG_ZMK_BATTERY_REPORTING)
     // check and indicate battery level on thread start
     LOG_INF("Indicating initial battery status");
@@ -526,6 +712,20 @@ extern void led_init_thread(void *d0, void *d1, void *d2) {
     LOG_INF("Setting initial layer color");
     update_layer_color();
 #endif // SHOW_LAYER_COLORS
+
+#if SHOW_PROFILE_COLORS
+    LOG_INF("Setting initial profile color");
+    update_profile_color(true);
+#endif // SHOW_PROFILE_COLORS
+
+#if SHOW_PERIPHERAL_LAYER_COLORS
+    // Apply any layer the central pushed while we were still booting: the
+    // battery indication keeps `initialized` false, so the listener dropped it.
+    uint8_t initial_layer = 0;
+    zmk_split_peripheral_get_layer(&initial_layer);
+    LOG_INF("Setting initial peripheral layer color (layer %d)", initial_layer);
+    update_peripheral_layer_color(initial_layer);
+#endif // SHOW_PERIPHERAL_LAYER_COLORS
 
     initialized = true;
     LOG_INF("Finished initializing LED widget");

@@ -6,6 +6,18 @@
     (IS_ENABLED(CONFIG_RGBLED_WIDGET_SHOW_LAYER_COLORS)) &&                                        \
         (!IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
 
+// Profiles only exist on the BLE central, so gate on CONFIG_ZMK_BLE as well
+#define SHOW_PROFILE_COLORS                                                                         \
+    (IS_ENABLED(CONFIG_RGBLED_WIDGET_SHOW_PROFILE_COLORS)) && (IS_ENABLED(CONFIG_ZMK_BLE)) &&       \
+        (!IS_ENABLED(CONFIG_ZMK_SPLIT) || IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL))
+
+// A split peripheral has no keymap; it shows layer color from the index the
+// central pushes over CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE.
+#define SHOW_PERIPHERAL_LAYER_COLORS                                                                \
+    (IS_ENABLED(CONFIG_RGBLED_WIDGET_SHOW_LAYER_COLORS)) && IS_ENABLED(CONFIG_ZMK_SPLIT) &&         \
+        !IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL) &&                                               \
+        IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
+
 #if IS_ENABLED(CONFIG_ZMK_BATTERY_REPORTING)
 void indicate_battery(void);
 #endif
@@ -18,7 +30,7 @@ void indicate_connectivity(void);
 void indicate_layer(void);
 #endif
 
-#if IS_ENABLED(CONFIG_RGBLED_WIDGET_SHOW_LAYER_COLORS)
+#if IS_ENABLED(CONFIG_RGBLED_WIDGET_SHOW_LAYER_COLORS) || IS_ENABLED(CONFIG_ZMK_SPLIT_PERIPHERAL_LAYER_STATE)
 /**
  * Set a layer's LED color at runtime and persist to settings.
  * @param layer_id  Layer index (0-based)

@@ -12,6 +12,16 @@ config RGBLED_WIDGET_INTERVAL_MS
     int "Minimum wait duration between two blinks in ms"
     default 500
 
+config RGBLED_WIDGET_RESET_DIAG
+    bool "Blink previous reset cause on boot (diagnostics)"
+    help
+      On boot, blink 3x with the cause of the previous reboot:
+      yellow = fatal error (assert/oops/fault), red = hardware watchdog
+      without a fatal error (feed starved), magenta = CPU lockup,
+      cyan = other soft reset (incl. leaving the UF2 bootloader).
+      No blink on normal power-on/reset-pin boots. Fatal errors also
+      reboot immediately instead of halting until the watchdog fires.
+
 # Battery level settings
 
 choice RGBLED_WIDGET_BATTERY_SHOW
@@ -285,6 +295,48 @@ config RGBLED_WIDGET_LAYER_31_COLOR
     int "Color to use for layer 31"
     range 0 7
     default 0
+
+# Constant per-profile color settings (BLE central only)
+config RGBLED_WIDGET_SHOW_PROFILE_COLORS
+    bool "Use custom colors per active BLE profile (central only)"
+
+config RGBLED_WIDGET_PROFILE_0_COLOR
+    int "Color to use for BLE profile 0"
+    range 0 7
+    default 7
+
+config RGBLED_WIDGET_PROFILE_1_COLOR
+    int "Color to use for BLE profile 1"
+    range 0 7
+    default 4
+
+config RGBLED_WIDGET_PROFILE_2_COLOR
+    int "Color to use for BLE profile 2"
+    range 0 7
+    default 2
+
+config RGBLED_WIDGET_PROFILE_3_COLOR
+    int "Color to use for BLE profile 3"
+    range 0 7
+    default 5
+
+config RGBLED_WIDGET_PROFILE_4_COLOR
+    int "Color to use for BLE profile 4"
+    range 0 7
+    default 6
+
+config RGBLED_WIDGET_PROFILE_5_COLOR
+    int "Color to use for BLE profile 5"
+    range 0 7
+    default 3
+
+config RGBLED_WIDGET_PROFILE_BLINK_FAST_MS
+    int "Profile-state fast blink half-period (unregistered), ms"
+    default 150
+
+config RGBLED_WIDGET_PROFILE_BLINK_SLOW_MS
+    int "Profile-state slow blink half-period (paired but disconnected), ms"
+    default 700
 
 endif # RGBLED_WIDGET
 

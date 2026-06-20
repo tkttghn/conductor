@@ -66,10 +66,15 @@
         compatible = "zmk,input-listener";
         device = <&trackball>;
 
-        /* ベース: オートマウスレイヤー (AML)
-         * トラックボール操作時にレイヤー4 (MOUSE) を自動有効化
-         * 60000ms (60秒) のタイムアウトで自動解除 */
-        input-processors = <&zip_temp_layer 4 60000>;
+        /* AML disabled for isolation: do not auto-enable layer 4 on trackball movement. */
+        /* input-processors = <&zip_temp_layer 4 60000>; */
+
+        /* Keep temp-layer compiled for Studio RPC symbols while AML is disabled.
+         * Layer 31 is not used by this keymap, so this override never runs in normal use. */
+        aml_disabled_anchor {
+            layers = <31>;
+            input-processors = <&zip_temp_layer 4 60000>;
+        };
 
         /* スクロールレイヤー: レイヤー5 (SCROLL) がアクティブ時
          * XY移動をスクロールホイールに変換
@@ -136,7 +141,7 @@
         reg = <0>;
         spi-max-frequency = <2000000>;
         irq-gpios = <&gpio0 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
-        cpi = <800>;
+        cpi = <1200>;
         force-awake;
         evt-type = <INPUT_EV_REL>;
         x-input-code = <INPUT_REL_X>;

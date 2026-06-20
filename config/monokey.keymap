@@ -195,7 +195,7 @@
             bindings = <
                 &kp F1          &kp F2        &kp F3             &kp F4         &kp F5                          &kp F6    &kp F7    &kp F8    &kp F9     &kp F10
                 &kp F11         &kp F12       &kp LC(F)          &none          &none                           &kp BSPC  &mkp MB1  &kp UP    &mkp MB2   &none
-                &kp LEFT_SHIFT  &kp LC(LEFT)  &kp LA(LC(LG(N)))  &kp LC(RIGHT)  &kp LS(LG(N4))                  &kp DEL   &kp LEFT  &kp DOWN  &kp RIGHT  &kp RIGHT_SHIFT
+                &kp LEFT_SHIFT  &kp LC(LEFT)  &kp LA(LC(LG(N)))  &kp LC(RIGHT)  &kp LC(LS(LG(N4)))              &kp DEL   &kp LEFT  &kp DOWN  &kp RIGHT  &kp RIGHT_SHIFT
                 &trans          &trans        &trans             &trans         &trans          &trans  &trans  &trans                        &trans     &trans
             >;
         };

@@ -10,6 +10,23 @@
   - `monokey_L` + `rgbled_adapter`
   - `settings_reset`
 
+## Firmware Artifacts
+
+GitHub Actions の firmware artifact は、Finder やダウンロード一覧で左右・用途がすぐ分かるように、target を先頭に置く命名にします。
+
+- 通常ビルド: `<target>_conductor_v<version>.uf2`
+- デバッグビルド: `<target>_debug_conductor_v<version>.uf2`
+- リセットビルド: `reset_conductor_v<version>.uf2`
+
+例:
+
+- `R_conductor_v0.5.0.uf2`
+- `L_conductor_v0.5.0.uf2`
+- `R_debug_conductor_v0.5.0.uf2`
+- `reset_conductor_v0.5.0.uf2`
+
+`artifact-name` を更新するときは `build.yaml` でもこの規則を維持します。
+
 ## ライセンス
 
 このプロジェクトは **MIT License** の下で公開されています。詳細については、[LICENSE](LICENSE) ファイルをご覧ください。

@@ -3,6 +3,7 @@
 #include <zephyr/drivers/led.h>
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
+#include <zephyr/settings/settings.h>
 
 #include <zmk/battery.h>
 #include <zmk/ble.h>
@@ -59,7 +60,7 @@ static const char *color_names[] = {"black", "red",     "green", "yellow",
                                     "blue",  "magenta", "cyan",  "white"};
 
 #if SHOW_LAYER_COLORS
-static const uint8_t layer_color_idx[] = {
+static uint8_t layer_color_idx[] = {
     CONFIG_RGBLED_WIDGET_LAYER_0_COLOR,  CONFIG_RGBLED_WIDGET_LAYER_1_COLOR,
     CONFIG_RGBLED_WIDGET_LAYER_2_COLOR,  CONFIG_RGBLED_WIDGET_LAYER_3_COLOR,
     CONFIG_RGBLED_WIDGET_LAYER_4_COLOR,  CONFIG_RGBLED_WIDGET_LAYER_5_COLOR,
@@ -361,6 +362,51 @@ static int led_layer_color_listener_cb(const zmk_event_t *eh) {
 ZMK_LISTENER(led_layer_color_listener, led_layer_color_listener_cb);
 ZMK_SUBSCRIPTION(led_layer_color_listener, zmk_layer_state_changed);
 ZMK_SUBSCRIPTION(led_layer_color_listener, zmk_activity_state_changed);
+
+#define RGBLED_LAYER_COLOR_SETTINGS_KEY "rgbled/l_c"
+
+uint8_t zmk_rgbled_widget_get_layer_color(uint8_t layer_id) {
+    if (layer_id >= ARRAY_SIZE(layer_color_idx)) {
+        return 0;
+    }
+    return layer_color_idx[layer_id];
+}
+
+void zmk_rgbled_widget_set_layer_color(uint8_t layer_id, uint8_t color_idx) {
+    if (layer_id >= ARRAY_SIZE(layer_color_idx) || color_idx > 7) {
+        LOG_WRN("Invalid layer_id %d or color_idx %d", layer_id, color_idx);
+        return;
+    }
+    layer_color_idx[layer_id] = color_idx;
+    LOG_INF("Layer %d color set to %s via RPC", layer_id, color_names[color_idx]);
+    update_layer_color();
+    settings_save_one(RGBLED_LAYER_COLOR_SETTINGS_KEY, layer_color_idx, sizeof(layer_color_idx));
+}
+
+static int rgbled_settings_set(const char *key, size_t len, settings_read_cb read_cb, void *cb_arg) {
+    if (strcmp(key, "l_c") == 0) {
+        uint8_t tmp[ARRAY_SIZE(layer_color_idx)];
+        size_t read_len = MIN(len, sizeof(tmp));
+        if (read_cb(cb_arg, tmp, read_len) > 0) {
+            memcpy(layer_color_idx, tmp, read_len);
+            LOG_INF("Loaded layer colors from settings");
+        }
+    }
+    return 0;
+}
+
+static struct settings_handler rgbled_settings_handler = {
+    .name = "rgbled",
+    .h_set = rgbled_settings_set,
+};
+
+static int rgbled_settings_init(void) {
+    settings_register(&rgbled_settings_handler);
+    settings_load_subtree("rgbled");
+    return 0;
+}
+
+SYS_INIT(rgbled_settings_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
 #endif // SHOW_LAYER_COLORS
 
 #if SHOW_LAYER_CHANGE

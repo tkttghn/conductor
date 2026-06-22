@@ -11,7 +11,8 @@ manifest:
   projects:
     - name: zmk
       remote: pite1222
-      revision: release/conductor-0.6.2
+      # pointer-acceleration feature branch (base release/conductor-0.6.2)
+      revision: feat/pointer-accel
       import: app/west.yml
     # Override the zephyr pinned by zmk's manifest: same base
     # (zmkfirmware v4.1.0+zmk-fixes) plus the BLE controller prepare
@@ -42,7 +43,8 @@ manifest:
           - trusted-firmware-m
     - name: zmk-studio-messages
       remote: pite1222
-      revision: release/conductor-0.6.0
+      # pointer-acceleration proto (set_accel/get_accel, base release/conductor-0.6.0)
+      revision: feat/pointer-accel
       path: modules/msgs/zmk-studio-messages
     - name: zmk-pmw3610-driver
       remote: badjeff

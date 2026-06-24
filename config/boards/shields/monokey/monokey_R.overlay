@@ -61,6 +61,17 @@
         track-remainders;
     };
 
+    /* Pointer acceleration (Studio-controlled): speed-dependent cursor gain.
+     * Prepended to the base trackball input-processors so it acts on raw motion;
+     * default OFF, toggled/tuned at runtime via Conductor Studio. bypass-layer
+     * = 12 (PRECISION) so accel never fights precision mode. */
+    studio_accel: studio_accel {
+        compatible = "zmk,input-processor-studio-accel";
+        #input-processor-cells = <0>;
+        codes = <INPUT_REL_X INPUT_REL_Y>;
+        bypass-layer = <12>;
+    };
+
     trackball_gestures: trackball_gestures {
         compatible = "zmk,input-processor-gestures";
         #input-processor-cells = <0>;
@@ -79,15 +90,10 @@
         compatible = "zmk,input-listener";
         device = <&trackball>;
 
-        /* AML disabled for isolation: do not auto-enable layer 4 on trackball movement. */
-        /* input-processors = <&zip_temp_layer 4 60000>; */
-
-        /* Keep temp-layer compiled for Studio RPC symbols while AML is disabled.
-         * Layer 31 is not used by this keymap, so this override never runs in normal use. */
-        aml_disabled_anchor {
-            layers = <31>;
-            input-processors = <&zip_temp_layer 4 60000>;
-        };
+        /* ベース: オートマウスレイヤー (AML)
+         * トラックボール操作時にレイヤー4 (MOUSE) を自動有効化
+         * 60000ms (60秒) のタイムアウトで自動解除 */
+        input-processors = <&studio_accel &zip_temp_layer 4 60000 &zip_xy_scaler 1 2>;
 
         /* スクロールレイヤー: レイヤー5 (SCROLL) がアクティブ時
          * XY移動をスクロールホイールに変換
